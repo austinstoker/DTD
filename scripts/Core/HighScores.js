@@ -14,7 +14,7 @@
 DTD.HighScores = (function() {
 	'use strict';
 	var scores = [],
-		previousScores = localStorage.getItem('Brickout.highScores');
+		previousScores = localStorage.getItem('DTD.highScores');
 
 	if (previousScores !== null) {
 		scores = JSON.parse(previousScores);
@@ -38,7 +38,7 @@ DTD.HighScores = (function() {
 			scores = scores.slice(0, 5);
 		}
 
-		localStorage['Brickout.highScores'] = JSON.stringify(scores);
+		localStorage['DTD.highScores'] = JSON.stringify(scores);
 	}
 
 	function get() {
