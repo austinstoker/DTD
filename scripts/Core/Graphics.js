@@ -63,7 +63,7 @@ DTD.graphics = (function() {
 		context.save();
 		
 		context.translate(spec.center.x, spec.center.y);
-		context.rotate(spec.rotation);
+		context.rotate(-spec.rotation);
 		context.translate(-spec.center.x, -spec.center.y);
 		
         context.globalAlpha = spec.opacity;
