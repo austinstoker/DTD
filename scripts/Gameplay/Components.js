@@ -265,8 +265,6 @@ DTD.components = (function(graphics) {
           return;
         }
         nextPoint = pathFunction(spec.exitNumber, spec.center);
-        console.log("current", spec.center);
-        console.log("next", nextPoint);
           moveTo(nextPoint, elapsedTime);
       }
       
@@ -388,8 +386,9 @@ DTD.components = (function(graphics) {
     var towers = [];
     var creeps = [];
     var towerInProgress = undefined;
-    var grid = [];
+    var grids = [];
     var entrances = [];
+    var sumTime=0;
     
     function newTowerConstructor(){};
     function internalClickHandler(){};
@@ -414,7 +413,9 @@ DTD.components = (function(graphics) {
       if(towerInProgress.validPosition){
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
-        grid = updateShortestPaths(entrances[0].out,blocked);
+        for(var e=0;e<entrances.length;e++){
+          grids[e] = updateShortestPaths(entrances[e].out,blocked);
+        }
         towerInProgress.place();
         towerInProgress = newTowerConstructor();
         moveTower(pos);
@@ -422,8 +423,10 @@ DTD.components = (function(graphics) {
     }
     
     function moveTower(pos){
+      if(towerInProgress.centerX === pos.x&&towerInProgress.centerY === pos.y) return;
       towerInProgress.centerX = pos.x;
       towerInProgress.centerY = pos.y;
+      //check collisions with other towers
       for(var i=0; i<towers.length; i++){
         if(overlapRectangles(towers[i],towerInProgress))
         {
@@ -431,13 +434,17 @@ DTD.components = (function(graphics) {
           return;
         }
       }
-      var tests = getCellsBlockedByTower(towerInProgress);
-      tempGrid = updateShortestPaths(entrances[0].out,tests);
-      if(tempGrid[entrances[0].in.i][entrances[0].in.j].d === 100000){
-        towerInProgress.validPosition = false;
-        return;
+      //check blocking creep paths
+      for(var e=0;e<entrances.length;e++){
+        var tests = getCellsBlockedByTower(towerInProgress);
+        tempGrid = updateShortestPaths(entrances[e].out,tests);
+        if(tempGrid[entrances[e].in.i][entrances[e].in.j].d > 10000){
+          towerInProgress.validPosition = false;
+          return;
+        }
+        towerInProgress.validPosition = true;
       }
-      towerInProgress.validPosition = true;
+      
     }
     
     function selectTower(pos){
@@ -470,13 +477,17 @@ DTD.components = (function(graphics) {
       return toScreenUnits(mapPos);
     }
     
-    that.addCreep = function(creep){
+    function addCreep(creep){
       var entrance = entrances[creep.getExitNumber()].in;
       var coords = toScreenUnits(entrance);
       creep.centerX = coords.x+Constants.CreepWidth/2;
       creep.centerY = coords.y+Constants.CreepHeight/2;
       creep.setPathFindingFunction(nextStepTowardExit);
       creeps.push(creep);
+    }
+    
+    that.addCreep = function(creep){
+      addCreep(creep);
     }
     
     that.settowerInProgress = function(f){
@@ -531,6 +542,12 @@ DTD.components = (function(graphics) {
     }
     
     that.update = function(elapsedTime){
+      sumTime+=elapsedTime;
+      if(sumTime>=2000){
+        sumTime = 0;
+        addCreep(Creep_2({exitNumber:0}));
+        addCreep(Creep_3({exitNumber:1}));
+      }
       for(var i = 0; i<towers.length; i++)
       {
         towers[i].update(elapsedTime);
@@ -563,7 +580,7 @@ DTD.components = (function(graphics) {
           var j = cells[b].j;
           if(myGrid.length>i&& i>=0){
             if(myGrid[i].length>j && j>=0){
-              myGrid[i][j].d=undefined;
+              myGrid[i][j].c=10000;
             }
           }
         }
@@ -572,12 +589,8 @@ DTD.components = (function(graphics) {
       function process(cur,i,j){
         var neighbor = myGrid[i][j];
         var current = myGrid[cur.i][cur.j];
-        if(neighbor.d===undefined){
-          neighbor.pre = cur;
-          return;
-        }
-        if(current.d+1<neighbor.d){
-            neighbor.d = current.d+1;
+        if(current.d+current.c<neighbor.d){
+            neighbor.d = current.d+current.c;
             neighbor.pre = cur;
             stack.push({i:i,j:j});
           }
@@ -612,7 +625,7 @@ DTD.components = (function(graphics) {
       pos.x-=Constants.GridWidth/2;
       pos.y-=Constants.GridHeight/2;
       var cur = toMapUnits(pos);
-      var coord = grid[cur.i][cur.j].pre;
+      var coord = grids[exitNumber][cur.i][cur.j].pre;
       if(coord===undefined) return currentPosition;
       var dest = toScreenUnits(coord);
       dest.x +=Constants.GridWidth/2;
@@ -635,10 +648,10 @@ DTD.components = (function(graphics) {
                 y:j*Constants.GridHeight,
                 width:Constants.GridWidth,
                 height:Constants.GridHeight,
-                fill:'rgba('+3*grid[i][j].d+',40,40,1)',
+                fill:'rgba('+3*grids[0][i][j].d+',40,40,1)',
                 stroke:'grey'
               };
-          if(grid[i][j].d===undefined){
+          if(grids[0][i][j].c>=10000){
             rspec.fill = 'purple';
             rspec.stroke = 'red';
           }
@@ -665,15 +678,17 @@ DTD.components = (function(graphics) {
         var gridLine = [];
         for(var j=0; j<spec.height/Constants.GridHeight; j++){
           if(theGrid[i] === undefined){
-            gridLine[j] = {d:100000,
+            gridLine[j] = {d:1000000,
+                           c:1,
                            pre:undefined};
           }
           else{
-            if(theGrid[i][j].d === undefined){
+            if(theGrid[i][j].c >=10000){
               gridLine[j] = theGrid[i][j];
             }else{
-              gridLine[j] = {d:100000,
-                           pre:undefined};
+              gridLine[j] = {d:1000000,
+                             c:1,
+                             pre:undefined};
             }
           }
         }
@@ -682,7 +697,10 @@ DTD.components = (function(graphics) {
       return theGrid;
     }
     
-    grid = updateShortestPaths(entrances[0].out);
+    grids.length = 0;
+    for(var e=0;e<entrances.length;e++){
+      grids.push(updateShortestPaths(entrances[e].out));
+    }
     return that;
   }
 
@@ -764,7 +782,7 @@ DTD.components = (function(graphics) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 80
+      speed: 40
     });
   }
   
@@ -777,7 +795,7 @@ DTD.components = (function(graphics) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 100
+      speed: 50
     });
   }
   
@@ -790,7 +808,7 @@ DTD.components = (function(graphics) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 120
+      speed: 60
     });
   }
 
