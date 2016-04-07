@@ -18,6 +18,10 @@ DTD.model = (function(components, graphics, input) {
 
     function update(elapsedTime) {
       map.update(elapsedTime);
+      var creep = components.Creep_2({exitNumber:0});
+      map.addCreep(creep);
+      var creep3 = components.Creep_3({exitNumber:1});
+      map.addCreep(creep3);
     }
 
     function render() {

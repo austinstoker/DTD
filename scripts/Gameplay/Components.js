@@ -256,12 +256,17 @@ DTD.components = (function(graphics) {
       that.setPathFindingFunction = function(f) {
         pathFunction = f;
       }
+      that.getExitNumber = function() {
+        return spec.exitNumber;
+      }
       
       that.update = function(elapsedTime) {
         if (elapsedTime < 0) {
           return;
         }
         nextPoint = pathFunction(spec.exitNumber, spec.center);
+        console.log("current", spec.center);
+        console.log("next", nextPoint);
           moveTo(nextPoint, elapsedTime);
       }
       
@@ -380,26 +385,36 @@ DTD.components = (function(graphics) {
   
   function Map(spec){
     var that = {};
-    var objects = [];
+    var towers = [];
+    var creeps = [];
     var towerInProgress = undefined;
     var grid = [];
+    var entrances = [];
+    
     function newTowerConstructor(){};
     function internalClickHandler(){};
     function internalMoveHandler(){};
     
+    function getCellsBlockedByTower(tower){
+      var L = (tower.left/Constants.GridWidth);
+      var R = (tower.right/Constants.GridWidth);
+      var T = (tower.top/Constants.GridHeight);
+      var B = (tower.bottom/Constants.GridHeight);
+      var tests = [];
+      for(var i=L; i<R; i++){
+        for(var j=T; j<B; j++){
+          tests.push({i:i,j:j});
+        }
+      }
+      return tests;
+    }
+    
     function placeTower(pos){
       moveTower(pos);
       if(towerInProgress.validPosition){
-        objects.push(towerInProgress);
-        var L = (towerInProgress.left/Constants.GridWidth);
-        var R = (towerInProgress.right/Constants.GridWidth);
-        var T = (towerInProgress.top/Constants.GridHeight);
-        var B = (towerInProgress.bottom/Constants.GridHeight);
-        for(var i=L; i<R; i++){
-          for(var j=T; j<B; j++){
-            grid[i][j]=10000;
-          }
-        }
+        towers.push(towerInProgress);
+        var blocked = getCellsBlockedByTower(towerInProgress);
+        grid = updateShortestPaths(entrances[0].out,blocked);
         towerInProgress.place();
         towerInProgress = newTowerConstructor();
         moveTower(pos);
@@ -409,34 +424,59 @@ DTD.components = (function(graphics) {
     function moveTower(pos){
       towerInProgress.centerX = pos.x;
       towerInProgress.centerY = pos.y;
-      var isValidPosition = true;
-      for(var i=0; i<objects.length; i++){
-        if(overlapRectangles(objects[i],towerInProgress))
+      for(var i=0; i<towers.length; i++){
+        if(overlapRectangles(towers[i],towerInProgress))
         {
-          isValidPosition= false;
-          break;
+          towerInProgress.validPosition= false;
+          return;
         }
       }
-      towerInProgress.validPosition = isValidPosition;
+      var tests = getCellsBlockedByTower(towerInProgress);
+      tempGrid = updateShortestPaths(entrances[0].out,tests);
+      if(tempGrid[entrances[0].in.i][entrances[0].in.j].d === 100000){
+        towerInProgress.validPosition = false;
+        return;
+      }
+      towerInProgress.validPosition = true;
     }
     
-    
-    function selectObject(pos){
-      for(var i = 0; i<objects.length;i++){
-        if(intersectPoint(objects[i],pos)){
-          objects[i].select();
+    function selectTower(pos){
+      for(var i = 0; i<towers.length;i++){
+        if(intersectPoint(towers[i],pos)){
+          towers[i].select();
         }
         else{
-          objects[i].unselect();
+          towers[i].unselect();
         }
       }
+    }
+    
+    function toMapUnits(pos){
+      var out = {};
+      out.i = Math.round(pos.x/(Constants.GridWidth));
+      out.j = Math.round(pos.y/(Constants.GridHeight));
+      return out;
+    }
+    
+    function toScreenUnits(pos){
+      var out = {};
+      out.x = pos.i*Constants.GridWidth;
+      out.y = pos.j*Constants.GridHeight;
+      return out;
     }
     
     function snapToGrid(pos){
-      var out = {};
-      out.x = Math.round(pos.x/(Constants.TowerWidth/2))*Constants.TowerWidth/2
-      out.y = Math.round(pos.y/(Constants.TowerHeight/2))*Constants.TowerHeight/2
-      return out;
+      var mapPos = toMapUnits(pos);
+      return toScreenUnits(mapPos);
+    }
+    
+    that.addCreep = function(creep){
+      var entrance = entrances[creep.getExitNumber()].in;
+      var coords = toScreenUnits(entrance);
+      creep.centerX = coords.x+Constants.CreepWidth/2;
+      creep.centerY = coords.y+Constants.CreepHeight/2;
+      creep.setPathFindingFunction(nextStepTowardExit);
+      creeps.push(creep);
     }
     
     that.settowerInProgress = function(f){
@@ -456,12 +496,12 @@ DTD.components = (function(graphics) {
         towerInProgress.centerY = -200;
         internalClickHandler = placeTower;
         internalMoveHandler = moveTower;
-        for(var i = 0; i<objects.length;i++){
-          objects[i].unselect();
+        for(var i = 0; i<towers.length;i++){
+          towers[i].unselect();
         }
       }
       else{
-        internalClickHandler = selectObject;
+        internalClickHandler = selectTower;
         internalMoveHandler = function(){};
       }
     }
@@ -491,10 +531,93 @@ DTD.components = (function(graphics) {
     }
     
     that.update = function(elapsedTime){
-      for(var i = 0; i<objects.length; i++)
+      for(var i = 0; i<towers.length; i++)
       {
-        objects[i].update(elapsedTime);
+        towers[i].update(elapsedTime);
       }
+      for(var i = 0; i<creeps.length; i++)
+      {
+        creeps[i].update(elapsedTime);
+      }
+    }
+    
+    updateShortestPaths = function(endPoint,tests){
+      var myGrid = [];
+      myGrid = clearPaths(myGrid);
+      var stack = [];
+      var blocked = [];
+      myGrid[endPoint.i][endPoint.j].d = 0;
+      stack.push(endPoint);
+      
+      for(var i=0; i<towers.length;i++){
+        blocked = getCellsBlockedByTower(towers[i]);
+        block(blocked);
+      }
+      if(tests!==undefined){
+        block(tests);
+      }
+      
+      function block(cells){
+        for(var b=0; b<cells.length;b++){
+          var i = cells[b].i;
+          var j = cells[b].j;
+          if(myGrid.length>i&& i>=0){
+            if(myGrid[i].length>j && j>=0){
+              myGrid[i][j].d=undefined;
+            }
+          }
+        }
+      }
+      
+      function process(cur,i,j){
+        var neighbor = myGrid[i][j];
+        var current = myGrid[cur.i][cur.j];
+        if(neighbor.d===undefined){
+          neighbor.pre = cur;
+          return;
+        }
+        if(current.d+1<neighbor.d){
+            neighbor.d = current.d+1;
+            neighbor.pre = cur;
+            stack.push({i:i,j:j});
+          }
+      }
+      
+      var left;
+      var right;
+      var top;
+      var bottom;
+      
+      while(stack.length>0){
+        var cur = stack.pop();
+        
+        if(cur.i>0){
+          process(cur,cur.i-1,cur.j);
+        }
+        if(cur.i<myGrid.length-1){
+          process(cur, cur.i+1,cur.j);
+        }
+        if(cur.j>0){
+          process(cur,cur.i,cur.j-1);
+        }
+        if(cur.j<myGrid[0].length-1){
+          process(cur,cur.i,cur.j+1);
+        }
+      }
+      return myGrid;
+    }
+    nextStepTowardExit = function(exitNumber, currentPosition){
+      var pos = {x:currentPosition.x,
+        y:currentPosition.y};
+      pos.x-=Constants.GridWidth/2;
+      pos.y-=Constants.GridHeight/2;
+      var cur = toMapUnits(pos);
+      var coord = grid[cur.i][cur.j].pre;
+      if(coord===undefined) return currentPosition;
+      var dest = toScreenUnits(coord);
+      dest.x +=Constants.GridWidth/2;
+      dest.y +=Constants.GridHeight/2;
+      return dest;
     }
     
     that.render = function(){
@@ -504,20 +627,29 @@ DTD.components = (function(graphics) {
                               height:spec.height,
                               fill:'grey',
                               stroke:'black'
-                              });            
-      for(var i = 0; i<objects.length;i++){
-        objects[i].render();
-      }
+                              });    
       for(var i = 0; i<spec.width/Constants.GridWidth;i++){
         for(var j = 0; j<spec.width/Constants.GridHeight;j++){
-          if(grid[i]!== undefined && grid[i][j]===10000){
-            graphics.drawRect({
-              pos:{
+          var rspec = {
                 x:i*Constants.GridWidth,
-                y:j*Constants.GridHeight
-            }})
+                y:j*Constants.GridHeight,
+                width:Constants.GridWidth,
+                height:Constants.GridHeight,
+                fill:'rgba('+3*grid[i][j].d+',40,40,1)',
+                stroke:'grey'
+              };
+          if(grid[i][j].d===undefined){
+            rspec.fill = 'purple';
+            rspec.stroke = 'red';
           }
+          graphics.drawRectangle(rspec);
         }
+      }        
+      for(var i = 0; i<towers.length;i++){
+        towers[i].render();
+      }
+      for(var i = 0; i<creeps.length;i++){
+        creeps[i].render();
       }
       
       if(towerInProgress!==undefined){
@@ -525,7 +657,32 @@ DTD.components = (function(graphics) {
       }  
     }
 
+    entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
+    entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
     
+    clearPaths = function(theGrid){
+      for(var i=0; i<spec.width/Constants.GridWidth; i++){
+        var gridLine = [];
+        for(var j=0; j<spec.height/Constants.GridHeight; j++){
+          if(theGrid[i] === undefined){
+            gridLine[j] = {d:100000,
+                           pre:undefined};
+          }
+          else{
+            if(theGrid[i][j].d === undefined){
+              gridLine[j] = theGrid[i][j];
+            }else{
+              gridLine[j] = {d:100000,
+                           pre:undefined};
+            }
+          }
+        }
+        theGrid[i] = gridLine;
+      }
+      return theGrid;
+    }
+    
+    grid = updateShortestPaths(entrances[0].out);
     return that;
   }
 
@@ -602,8 +759,8 @@ DTD.components = (function(graphics) {
     return Creep({
       image: 'images/creep/creep-1-blue/1.png',
       rotation: 0,
-      center: spec.center,
-      rotateSpeed: Math.PI / 4,
+      center: {x:2,y:2},
+      rotateSpeed: 40 / 4,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
@@ -615,8 +772,8 @@ DTD.components = (function(graphics) {
     return Creep({
       image: 'images/creep/creep-2-green/1.png',
       rotation: 0,
-      center: spec.center,
-      rotateSpeed: Math.PI / 3,
+      center: {x:2,y:2},
+      rotateSpeed: 40 / 3,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
@@ -628,8 +785,8 @@ DTD.components = (function(graphics) {
     return Creep({
       image: 'images/creep/creep-3-red/1.png',
       rotation: 0,
-      center: spec.center,
-      rotateSpeed: Math.PI / 2,
+      center: {x:2,y:2},
+      rotateSpeed: 40 / 2,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
