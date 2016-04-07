@@ -648,13 +648,9 @@ DTD.components = (function(graphics) {
                 y:j*Constants.GridHeight,
                 width:Constants.GridWidth,
                 height:Constants.GridHeight,
-                fill:'rgba('+3*grids[0][i][j].d+',40,40,1)',
+                fill:'rgba(200,200,200,.1)',
                 stroke:'grey'
               };
-          if(grids[0][i][j].c>=10000){
-            rspec.fill = 'purple';
-            rspec.stroke = 'red';
-          }
           graphics.drawRectangle(rspec);
         }
       }        
