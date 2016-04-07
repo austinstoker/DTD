@@ -47,6 +47,10 @@ DTD.components = (function(graphics) {
 	//
 	// Constants, as best as we can do them in JavaScript
 	var Constants = {
+    get GridHeight() { return 20; },
+    get GridWidth() { return 20; },
+    get CreepHeight() { return 20; },
+    get CreepWidth() { return 20; },
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
 	};
@@ -378,6 +382,7 @@ DTD.components = (function(graphics) {
     var that = {};
     var objects = [];
     var towerInProgress = undefined;
+    var grid = [];
     function newTowerConstructor(){};
     function internalClickHandler(){};
     function internalMoveHandler(){};
@@ -386,6 +391,15 @@ DTD.components = (function(graphics) {
       moveTower(pos);
       if(towerInProgress.validPosition){
         objects.push(towerInProgress);
+        var L = (towerInProgress.left/Constants.GridWidth);
+        var R = (towerInProgress.right/Constants.GridWidth);
+        var T = (towerInProgress.top/Constants.GridHeight);
+        var B = (towerInProgress.bottom/Constants.GridHeight);
+        for(var i=L; i<R; i++){
+          for(var j=T; j<B; j++){
+            grid[i][j]=10000;
+          }
+        }
         towerInProgress.place();
         towerInProgress = newTowerConstructor();
         moveTower(pos);
@@ -494,6 +508,18 @@ DTD.components = (function(graphics) {
       for(var i = 0; i<objects.length;i++){
         objects[i].render();
       }
+      for(var i = 0; i<spec.width/Constants.GridWidth;i++){
+        for(var j = 0; j<spec.width/Constants.GridHeight;j++){
+          if(grid[i]!== undefined && grid[i][j]===10000){
+            graphics.drawRect({
+              pos:{
+                x:i*Constants.GridWidth,
+                y:j*Constants.GridHeight
+            }})
+          }
+        }
+      }
+      
       if(towerInProgress!==undefined){
         towerInProgress.render();
       }  
@@ -578,8 +604,8 @@ DTD.components = (function(graphics) {
       rotation: 0,
       center: spec.center,
       rotateSpeed: Math.PI / 4,
-      width: 40,
-      height: 40,
+      width: Constants.CreepWidth,
+      height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
       speed: 80
     });
@@ -591,8 +617,8 @@ DTD.components = (function(graphics) {
       rotation: 0,
       center: spec.center,
       rotateSpeed: Math.PI / 3,
-      width: 40,
-      height: 40,
+      width: Constants.CreepWidth,
+      height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
       speed: 100
     });
@@ -604,8 +630,8 @@ DTD.components = (function(graphics) {
       rotation: 0,
       center: spec.center,
       rotateSpeed: Math.PI / 2,
-      width: 40,
-      height: 40,
+      width: Constants.CreepWidth,
+      height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
       speed: 120
     });
