@@ -49,8 +49,8 @@ DTD.components = (function(graphics) {
 	var Constants = {
     get GridHeight() { return 20; },
     get GridWidth() { return 20; },
-    get CreepHeight() { return 20; },
-    get CreepWidth() { return 20; },
+    get CreepHeight() { return 40; },
+    get CreepWidth() { return 40; },
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
 	};
@@ -249,13 +249,15 @@ DTD.components = (function(graphics) {
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
       },
-      texture = Texture(spec.image),
+      sprite = graphics.SpriteSheet(spec),
       nextPoint,
       pathFunction;
+      spec.opacity = 1;
       
       that.setPathFindingFunction = function(f) {
         pathFunction = f;
       }
+      
       that.getExitNumber = function() {
         return spec.exitNumber;
       }
@@ -264,6 +266,7 @@ DTD.components = (function(graphics) {
         if (elapsedTime < 0) {
           return;
         }
+        sprite.update(elapsedTime, true);
         nextPoint = pathFunction(spec.exitNumber, spec.center);
           moveTo(nextPoint, elapsedTime);
       }
@@ -312,13 +315,7 @@ DTD.components = (function(graphics) {
       }
 
       that.render = function() {
-        texture.draw({
-          center: spec.center,
-          width: spec.width,
-          height: spec.height,
-          rotation: spec.rotation,
-          opacity: 1
-        });
+        sprite.draw();
       }
 
       return that;
@@ -668,7 +665,7 @@ DTD.components = (function(graphics) {
 
     entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
     entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
-    
+
     clearPaths = function(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
         var gridLine = [];
@@ -771,40 +768,46 @@ DTD.components = (function(graphics) {
   
   function Creep_1(spec) {
     return Creep({
-      image: 'images/creep/creep-1-blue/1.png',
+      spriteSheet: 'images/creep/creep-1-blue/spriteSheet.png',
       rotation: 0,
       center: {x:2,y:2},
       rotateSpeed: 40 / 4,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 40
+      speed: 40,
+      spriteCount: 6,
+      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ]
     });
   }
   
   function Creep_2(spec) {
     return Creep({
-      image: 'images/creep/creep-2-green/1.png',
+      spriteSheet: 'images/creep/creep-2-green/spriteSheet.png',
       rotation: 0,
       center: {x:2,y:2},
       rotateSpeed: 40 / 3,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 50
+      speed: 50,
+      spriteCount: 4,
+      spriteTime: [ 200, 1000, 200, 600 ]
     });
   }
   
   function Creep_3(spec) {
     return Creep({
-      image: 'images/creep/creep-3-red/1.png',
+      spriteSheet: 'images/creep/creep-3-red/spriteSheet.png',
       rotation: 0,
       center: {x:2,y:2},
       rotateSpeed: 40 / 2,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       exitNumber: spec.exitNumber,
-      speed: 60
+      speed: 60,
+      spriteCount: 4,
+      spriteTime: [ 1000, 200, 200, 200 ]
     });
   }
 
