@@ -7,7 +7,7 @@ DTD.model = (function(components, graphics, input) {
       position: {x: 600, y:0},
       map: map
     });
-    var mouse = input.Mouse(); 
+    var mouse = input.Mouse();
     
     toolBox.addComponent(components.Tower_1);
     toolBox.addComponent(components.Tower_2);
