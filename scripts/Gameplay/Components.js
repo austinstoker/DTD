@@ -253,6 +253,18 @@ DTD.components = (function(graphics) {
       nextPoint,
       pathFunction;
       spec.opacity = 1;
+      spec.initialLifePoints = spec.lifePoints;
+      
+      that.hit = function(damage) {
+        spec.lifePoints -= damage;
+        if (spec.lifePoints <= 0) {
+          spec.lifePoints = 0;
+        }
+      }
+      
+      that.alive = function() {
+        return spec.lifePoints > 0;
+      }
       
       that.setPathFindingFunction = function(f) {
         pathFunction = f;
@@ -263,7 +275,12 @@ DTD.components = (function(graphics) {
       }
       
       that.update = function(elapsedTime) {
-        if (elapsedTime < 0) {
+        // This is only to demonstrate life point functionality and should be removed
+        if (elapsedTime > 100) {
+          that.hit(1);
+        }
+
+        if (elapsedTime < 0 || !that.alive()) {
           return;
         }
         sprite.update(elapsedTime, true);
@@ -282,7 +299,7 @@ DTD.components = (function(graphics) {
               x: direction.x / length,
               y: direction.y / length
             },
-            angle = Math.atan(-direction.y / direction.x);
+            angle = Math.atan(direction.y / direction.x);
           if (direction.x < 0) {
             angle += Math.PI;
           }
@@ -315,7 +332,26 @@ DTD.components = (function(graphics) {
       }
 
       that.render = function() {
-        sprite.draw();
+        if (that.alive()) {
+          var percentLife = spec.lifePoints / spec.initialLifePoints,
+            greenWidth = spec.width * percentLife,
+            redWidth = spec.width * (1 - percentLife);
+          sprite.draw();
+          graphics.drawRectangle({
+            fill: 'rgba(0,255,0,1)',
+            x: spec.center.x - spec.width / 2,
+            y: spec.center.y - spec.height / 2 - 10,
+            width: greenWidth,
+            height: 4
+          });
+          graphics.drawRectangle({
+            fill: 'rgba(255,0,0,1)',
+            x: spec.center.x - spec.width / 2 + greenWidth,
+            y: spec.center.y - spec.height / 2 - 10,
+            width: redWidth,
+            height: 4
+          });
+        }
       }
 
       return that;
@@ -774,6 +810,7 @@ DTD.components = (function(graphics) {
       rotateSpeed: 40 / 4,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
+      lifePoints: 40,
       exitNumber: spec.exitNumber,
       speed: 40,
       spriteCount: 6,
@@ -789,6 +826,7 @@ DTD.components = (function(graphics) {
       rotateSpeed: 40 / 3,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
+      lifePoints: 35,
       exitNumber: spec.exitNumber,
       speed: 50,
       spriteCount: 4,
@@ -804,6 +842,7 @@ DTD.components = (function(graphics) {
       rotateSpeed: 40 / 2,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
+      lifePoints: 30,
       exitNumber: spec.exitNumber,
       speed: 60,
       spriteCount: 4,
