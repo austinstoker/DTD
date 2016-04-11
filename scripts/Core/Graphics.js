@@ -63,7 +63,7 @@ DTD.graphics = (function() {
 		context.save();
 		
 		context.translate(spec.center.x, spec.center.y);
-		context.rotate(-spec.rotation);
+		context.rotate(spec.rotation);
 		context.translate(-spec.center.x, -spec.center.y);
 		
         context.globalAlpha = spec.opacity;
@@ -82,12 +82,16 @@ DTD.graphics = (function() {
 	//
 	//------------------------------------------------------------------
 	function drawRectangle(spec) {
-		context.fillStyle = spec.fill;
     context.globalAlpha = spec.opacity||1;
-		context.fillRect(spec.x, spec.y, spec.width, spec.height);
-
-		context.strokeStyle = spec.stroke;
-		context.strokeRect(spec.x, spec.y, spec.width, spec.height);
+    if ('fill' in spec) {
+      context.fillStyle = spec.fill;
+      context.fillRect(spec.x, spec.y, spec.width, spec.height);
+    }
+    
+    if ('stroke' in spec) {
+      context.strokeStyle = spec.stroke;
+      context.strokeRect(spec.x, spec.y, spec.width, spec.height);
+    }
     context.globalAlpha = 1;
 	}
 
