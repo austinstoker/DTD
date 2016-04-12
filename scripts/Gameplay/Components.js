@@ -250,7 +250,8 @@ DTD.components = (function(graphics) {
         set centerY(value) { spec.center.y = value },
       },
       sprite = graphics.SpriteSheet(spec),
-      nextPoint,
+      targetPosition = spec.center,
+      targetRotation,
       pathFunction;
       spec.opacity = 1;
       spec.initialLifePoints = spec.lifePoints;
@@ -275,6 +276,7 @@ DTD.components = (function(graphics) {
       }
       
       that.update = function(elapsedTime) {
+        var nextPoint, direction;
         // This is only to demonstrate life point functionality and should be removed
         if (elapsedTime > 100) {
           that.hit(1);
@@ -285,26 +287,38 @@ DTD.components = (function(graphics) {
         }
         sprite.update(elapsedTime, true);
         nextPoint = pathFunction(spec.exitNumber, spec.center);
-          moveTo(nextPoint, elapsedTime);
+        if (nextPoint.x !== targetPosition.x || nextPoint.y !== targetPosition.y) {
+          targetPosition = nextPoint;
+          direction = {
+            x: targetPosition.x - spec.center.x,
+            y: targetPosition.y - spec.center.y
+          }
+          if (direction.x !== 0) {
+            targetRotation = Math.atan(direction.y / direction.x);
+            if (direction.x < 0) {
+              targetRotation += Math.PI;
+            }
+          } else {
+            targetRotation = -Math.PI / 2;
+          }
+        }
+        moveTo(targetPosition, elapsedTime);
       }
       
       function moveTo(point, elapsedTime) {
         if (spec.center.x !== point.x || spec.center.y !== point.y) {
-          var direction = {
-            x: point.x - spec.center.x,
-            y: point.y - spec.center.y
-          },
-            length = Math.sqrt(direction.x * direction.x + direction.y * direction.y),
+          var direction, length, normalized;
+          
+          if (Math.abs(targetRotation - spec.rotation) < .00001) { // compare doubles with epsilon of .00001
+            direction = {
+              x: point.x - spec.center.x,
+              y: point.y - spec.center.y
+            };
+            length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
             normalized = {
               x: direction.x / length,
               y: direction.y / length
-            },
-            angle = Math.atan(direction.y / direction.x);
-          if (direction.x < 0) {
-            angle += Math.PI;
-          }
-          
-          if (Math.abs(spec.rotation - angle) < .00001) { // compare doubles with epsilon of .00001
+            }
             spec.center.x += Math.sign(direction.x) * Math.min(Math.abs(normalized.x * (spec.speed * (elapsedTime / 1000))), Math.abs(direction.x));
             spec.center.y += Math.sign(direction.y) * Math.min(Math.abs(normalized.y * (spec.speed * (elapsedTime / 1000))), Math.abs(direction.y));
             // if (spec.center.x === point.x && spec.center.y === point.y) {
@@ -312,7 +326,7 @@ DTD.components = (function(graphics) {
             // }
           }
           else {
-            var diff = (angle - spec.rotation) % (2 * Math.PI);
+            var diff = (targetRotation - spec.rotation) % (2 * Math.PI);
             if(diff > Math.PI){
               diff = Math.PI - diff;
             }

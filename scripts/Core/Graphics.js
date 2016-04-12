@@ -76,12 +76,12 @@ DTD.graphics = (function() {
 		context.restore();
 	}
   
-	//------------------------------------------------------------------
-	//
-	// Draws a rectangle
-	//
-	//------------------------------------------------------------------
-	function drawRectangle(spec) {
+  //------------------------------------------------------------------
+  //
+  // Draws a rectangle
+  //
+  //------------------------------------------------------------------
+  function drawRectangle(spec) {
     context.globalAlpha = spec.opacity||1;
     if ('fill' in spec) {
       context.fillStyle = spec.fill;
@@ -93,7 +93,7 @@ DTD.graphics = (function() {
       context.strokeRect(spec.x, spec.y, spec.width, spec.height);
     }
     context.globalAlpha = 1;
-	}
+  }
 
 	//------------------------------------------------------------------
 	//
