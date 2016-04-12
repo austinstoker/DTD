@@ -443,6 +443,7 @@ DTD.components = (function(graphics) {
     
     function placeTower(pos){
       moveTower(pos);
+      isNewTowerPosValid();
       if(towerInProgress.validPosition){
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
@@ -455,10 +456,7 @@ DTD.components = (function(graphics) {
       }
     }
     
-    function moveTower(pos){
-      if(towerInProgress.centerX === pos.x&&towerInProgress.centerY === pos.y) return;
-      towerInProgress.centerX = pos.x;
-      towerInProgress.centerY = pos.y;
+    function isNewTowerPosValid(){
       //check collisions with other towers
       for(var i=0; i<towers.length; i++){
         if(overlapRectangles(towers[i],towerInProgress))
@@ -470,14 +468,19 @@ DTD.components = (function(graphics) {
       //check blocking creep paths
       for(var e=0;e<entrances.length;e++){
         var tests = getCellsBlockedByTower(towerInProgress);
-        tempGrid = updateShortestPaths(entrances[e].out,tests);
+        var tempGrid = updateShortestPaths(entrances[e].out,tests);
         if(tempGrid[entrances[e].in.i][entrances[e].in.j].d > 10000){
           towerInProgress.validPosition = false;
           return;
         }
         towerInProgress.validPosition = true;
       }
-      
+    }
+    
+    function moveTower(pos){
+      if(towerInProgress.centerX === pos.x&&towerInProgress.centerY === pos.y) return;
+      towerInProgress.centerX = pos.x;
+      towerInProgress.centerY = pos.y;
     }
     
     function selectTower(pos){
