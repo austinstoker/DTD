@@ -9,13 +9,29 @@ DTD.model = (function(components, graphics, input) {
     });
     var mouse = input.Mouse();
     
+    AssetManager.loadImage('images/tower-defense-turrets/turret-1-1.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-1-2.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-1-3.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-2-1.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-2-2.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-2-3.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-5-1.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-5-2.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-5-3.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-7-1.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-7-2.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-7-3.png');
+    AssetManager.loadImage('images/creep/creep-1-blue/spriteSheet.png');
+    AssetManager.loadImage('images/creep/creep-2-green/spriteSheet.png');
+    AssetManager.loadImage('images/creep/creep-3-red/spriteSheet.png');
+    
     toolBox.addComponent(components.Tower_1);
     toolBox.addComponent(components.Tower_2);
     toolBox.addComponent(components.Tower_3);
     toolBox.addComponent(components.Tower_4);
     toolBox.addComponent(components.Tower_5);
     toolBox.addComponent(components.Tower_6);
-
+    
     function update(elapsedTime) {
       map.update(elapsedTime);
     }
