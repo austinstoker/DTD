@@ -427,6 +427,7 @@ DTD.components = (function(graphics) {
     var creeps = [];
     var towerInProgress = undefined;
     var grids = [];
+    var cells = [];
     var entrances = [];
     var sumTime=0;
     
@@ -601,7 +602,7 @@ DTD.components = (function(graphics) {
       }
     }
     
-    updateShortestPaths = function(endPoint,tests){
+    function updateShortestPaths(endPoint,tests){
       var myGrid = [];
       myGrid = clearPaths(myGrid);
       var stack = [];
@@ -662,7 +663,8 @@ DTD.components = (function(graphics) {
       }
       return myGrid;
     }
-    nextStepTowardExit = function(exitNumber, currentPosition){
+    
+    function nextStepTowardExit(exitNumber, currentPosition){
       var pos = {x:currentPosition.x,
         y:currentPosition.y};
       pos.x-=Constants.GridWidth/2;
@@ -674,6 +676,23 @@ DTD.components = (function(graphics) {
       dest.x +=Constants.GridWidth/2;
       dest.y +=Constants.GridHeight/2;
       return dest;
+    }
+    
+    function getNearestCreep(center,radius){
+      if(creeps.length>0&& creeps.length%2===0){
+        return creeps[0];
+      }
+      return undefined;
+    }
+    
+    function checkCollisions(projectile){
+      for(var i = 0; i< creeps.length; i++ ){
+        var hit = intersectRectangles(projectile,creeps[i]);
+        if(hit){
+          creeps[i].hit(projectile.damage);
+          projectile.hit();
+        }
+      }
     }
     
     that.render = function(){
@@ -712,7 +731,7 @@ DTD.components = (function(graphics) {
     entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
     entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
     
-    clearPaths = function(theGrid){
+    function clearPaths(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
         var gridLine = [];
         for(var j=0; j<spec.height/Constants.GridHeight; j++){
