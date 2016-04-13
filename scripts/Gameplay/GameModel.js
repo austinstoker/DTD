@@ -33,6 +33,7 @@ DTD.model = (function(components, graphics, input) {
     toolBox.addComponent(components.Tower_6);
     
     function update(elapsedTime) {
+      elapsedTime = Math.min(elapsedTime,200);
       map.update(elapsedTime);
     }
 
