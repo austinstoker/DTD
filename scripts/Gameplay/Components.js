@@ -1,59 +1,58 @@
 
 DTD.components = (function(graphics) {
 
-	//------------------------------------------------------------------
-	//
-	// Tests to see if two rectangles intersect.  If they do, true is returned,
-	// false otherwise.
-	// Adapted from: http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
-	//
-	//------------------------------------------------------------------
-	function intersectRectangles(r1, r2) {
-		return !(
-			r2.left > r1.right ||
-			r2.right < r1.left ||
-			r2.top > r1.bottom ||
-			r2.bottom < r1.top
-		);
-	}
+  //------------------------------------------------------------------
+  //
+  // Tests to see if two rectangles intersect.  If they do, true is returned,
+  // false otherwise.
+  // Adapted from: http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
+  //
+  //------------------------------------------------------------------
+  function intersectRectangles(r1, r2) {
+    return !(
+      r2.left > r1.right ||
+      r2.right < r1.left ||
+      r2.top > r1.bottom ||
+      r2.bottom < r1.top
+    );
+  }
   
   //------------------------------------------------------------------
-	//
-	// Tests to see if two rectangles intersect.  If they do, true is returned,
-	// false otherwise.
-	// Adapted from: http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
-	//
-	//------------------------------------------------------------------
-	function overlapRectangles(r1, r2) {
-		return (
-			r2.left < r1.right &&
-			r2.right > r1.left &&
-			r2.top < r1.bottom &&
-			r2.bottom > r1.top
-		);
-	}
-  
+  //
+  // Tests to see if two rectangles intersect.  If they do, true is returned,
+  // false otherwise.
+  // Adapted from: http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
+  //
+  //------------------------------------------------------------------
+  function overlapRectangles(r1, r2) {
+    return (
+      r2.left < r1.right &&
+      r2.right > r1.left &&
+      r2.top < r1.bottom &&
+      r2.bottom > r1.top
+    );
+  }
   
   function intersectPoint(r, p) {
-		return (
-			p.x < r.right &&
-			p.x > r.left &&
-			p.y < r.bottom &&
-			p.y > r.top
-		);
-	}
+    return (
+      p.x < r.right &&
+      p.x > r.left &&
+      p.y < r.bottom &&
+      p.y > r.top
+    );
+  }
   
-  
-	//
-	// Constants, as best as we can do them in JavaScript
-	var Constants = {
+  //
+  // Constants, as best as we can do them in JavaScript
+  var Constants = {
     get GridHeight() { return 20; },
     get GridWidth() { return 20; },
     get CreepHeight() { return 40; },
     get CreepWidth() { return 40; },
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
-	};
+  };
+
   // ------------------------------------------------------------------
     //
     // This represents the model for a Tower.  It knows how to
@@ -63,25 +62,25 @@ DTD.components = (function(graphics) {
     //
     // ------------------------------------------------------------------
     function Tower(spec) {
-        var that = {
-            get left() { return spec.center.x - Constants.TowerWidth / 2 },
-            get right() { return spec.center.x + Constants.TowerWidth / 2 },
-            get top() { return spec.center.y - Constants.TowerHeight / 2 },
-            get bottom() { return spec.center.y + Constants.TowerHeight / 2 },
-            get center() { return spec.center },
-      get rotation() { return spec.rotation },
-      set centerX(value) { spec.center.x = value },
-      set centerY(value) { spec.center.y = value },
-      set validPosition(value) { validPosition = value},
-      get validPosition() { return validPosition;},
-      set highlight(value) {highlight = value;},
-      get highlight() {return highlight;}
-        },
+      var that = {
+        get left() { return spec.center.x - Constants.TowerWidth / 2 },
+        get right() { return spec.center.x + Constants.TowerWidth / 2 },
+        get top() { return spec.center.y - Constants.TowerHeight / 2 },
+        get bottom() { return spec.center.y + Constants.TowerHeight / 2 },
+        get center() { return spec.center },
+        get rotation() { return spec.rotation },
+        set centerX(value) { spec.center.x = value },
+        set centerY(value) { spec.center.y = value },
+        set validPosition(value) { validPosition = value},
+        get validPosition() { return validPosition;},
+        set highlight(value) {highlight = value;},
+        get highlight() {return highlight;}
+      },
         highlight = false,
-            texture = graphics.Texture(spec),
-            targetRotation = spec.rotation,
-            rotateSpeed = spec.rotateSpeed,
-            validPosition = true;
+        texture = graphics.Texture(spec),
+        targetRotation = spec.rotation,
+        rotateSpeed = spec.rotateSpeed,
+        validPosition = true;
         
         that.placed = false;
         spec.width = Constants.TowerWidth;
@@ -91,12 +90,13 @@ DTD.components = (function(graphics) {
         that.setRotationSpeed = function(speed){
           rotateSpeed = speed;
         }
+        
         that.setRotation = function(rotation) {
-            targetRotation = rotation%(2*Math.PI);
+          targetRotation = rotation%(2*Math.PI);
         }
         
         function updatePlacing(elapsedTime) {
-            validPosition = true;
+          validPosition = true;
         }
         
         function updatePlaced(elapsedTime) {
@@ -109,34 +109,33 @@ DTD.components = (function(graphics) {
         }
 
         function renderPlacing() {
-            var squareFill;
-            if (validPosition) {
-                squareFill = 'rgba(0, 255, 0, 0.4)';
-            }
-            else {
-                squareFill = 'rgba(255, 0, 0, 0.4)';
-            }
-            graphics.drawCircle({
-                center: spec.center,
-                radius: spec.radius,
-                fill: 'rgba(200, 200, 200, 0.4)',
-                stroke: 'rgba(150, 150, 150, 0.4)'
-            });
-            graphics.drawRectangle({
-                x: spec.center.x - Constants.TowerWidth / 2,
-                y: spec.center.y - Constants.TowerHeight / 2,
-                width: Constants.TowerWidth,
-                height: Constants.TowerHeight,
-                fill: squareFill
-            })
-            texture.draw();
+          var squareFill;
+          if (validPosition) {
+            squareFill = 'rgba(0, 255, 0, 0.4)';
+          }
+          else {
+            squareFill = 'rgba(255, 0, 0, 0.4)';
+          }
+          graphics.drawCircle({
+            center: spec.center,
+            radius: spec.radius,
+            fill: 'rgba(200, 200, 200, 0.4)',
+            stroke: 'rgba(150, 150, 150, 0.4)'
+          });
+          graphics.drawRectangle({
+            x: spec.center.x - Constants.TowerWidth / 2,
+            y: spec.center.y - Constants.TowerHeight / 2,
+            width: Constants.TowerWidth,
+            height: Constants.TowerHeight,
+            fill: squareFill
+          })
+          texture.draw();
         }
         
         function renderPlaced() {
           var f;
           if(highlight){
             f=spec.baseColor;
-            
           }
           else {
             f='gray';
@@ -151,41 +150,41 @@ DTD.components = (function(graphics) {
             fill: f,
             opacity: 0.4
           });
-            texture.draw();
+          texture.draw();
         }
         
         function renderSelected() {
-            graphics.drawCircle({
-                center: spec.center,
-                radius: spec.radius,
-                fill: 'rgba(200, 200, 200, 0.4)',
-                stroke: 'rgba(100, 100, 100, 1)'
-            });
-            renderPlaced();
+          graphics.drawCircle({
+            center: spec.center,
+            radius: spec.radius,
+            fill: 'rgba(200, 200, 200, 0.4)',
+            stroke: 'rgba(100, 100, 100, 1)'
+          });
+          renderPlaced();
         }
 
         that.update = updatePlacing;
         that.render = renderPlacing;
         
         that.place = function() {
-            if (!that.placed && validPosition) {
-                that.placed = true;
-                that.render = renderPlaced;
-                that.update = updatePlaced;
-                spec.opacity = 1;
-            }
+          if (!that.placed && validPosition) {
+            that.placed = true;
+            that.render = renderPlaced;
+            that.update = updatePlaced;
+            spec.opacity = 1;
+          }
         }
         
         that.select = function() {
-            if (that.placed) {
-                that.render = renderSelected;
-            }
+          if (that.placed) {
+           that.render = renderSelected;
+          }
         }
         
         that.unselect = function() {
-            if (that.placed) {
-                that.render = renderPlaced;
-            }
+          if (that.placed) {
+            that.render = renderPlaced;
+          }
         }
 
         return that;
@@ -220,7 +219,8 @@ DTD.components = (function(graphics) {
         set centerY(value) { spec.center.y = value },
       },
       sprite = graphics.SpriteSheet(spec),
-      nextPoint,
+      targetPosition = spec.center,
+      targetRotation,
       pathFunction;
       spec.opacity = 1;
       spec.initialLifePoints = spec.lifePoints;
@@ -245,6 +245,7 @@ DTD.components = (function(graphics) {
       }
       
       that.update = function(elapsedTime) {
+        var nextPoint, direction;
         // This is only to demonstrate life point functionality and should be removed
         if (elapsedTime > 100) {
           that.hit(1);
@@ -254,50 +255,86 @@ DTD.components = (function(graphics) {
           return;
         }
         sprite.update(elapsedTime, true);
-        nextPoint = pathFunction(spec.exitNumber, spec.center);
-          moveTo(nextPoint, elapsedTime);
+        do {
+          updateTargets();
+          elapsedTime -= rotateAndMove(elapsedTime);
+        } while (elapsedTime > 0);
       }
       
-      function moveTo(point, elapsedTime) {
-        if (spec.center.x !== point.x || spec.center.y !== point.y) {
-          var direction = {
-            x: point.x - spec.center.x,
-            y: point.y - spec.center.y
-          },
-            length = Math.sqrt(direction.x * direction.x + direction.y * direction.y),
-            normalized = {
-              x: direction.x / length,
-              y: direction.y / length
-            },
-            angle = Math.atan(direction.y / direction.x);
-          if (direction.x < 0) {
-            angle += Math.PI;
+      function updateTargets() {
+        nextPoint = pathFunction(spec.exitNumber, spec.center);
+        if (nextPoint.x !== targetPosition.x || nextPoint.y !== targetPosition.y) {
+          targetPosition = nextPoint;
+          direction = {
+            x: targetPosition.x - spec.center.x,
+            y: targetPosition.y - spec.center.y
+          }
+          if (direction.x !== 0) {
+            targetRotation = Math.atan(direction.y / direction.x);
+            if (direction.x < 0) {
+              targetRotation += Math.PI;
+            }
+            else if (targetRotation < 0) {
+              targetRotation += 2 * Math.PI;
+            }
+          } else {
+            targetRotation = Math.PI / 2;
+          }
+        }
+      }
+      
+      // Returns the amount of time "spent" rotating and moving
+      function rotateAndMove(elapsedTime) {
+        if (spec.center.x !== targetPosition.x || spec.center.y !== targetPosition.y) {
+          var direction, length, normalized,
+            remainingTime = elapsedTime,
+            remainingSecs = elapsedTime / 1000,
+            diff = (targetRotation - spec.rotation) % (2 * Math.PI);
+            
+          if(diff > Math.PI){
+            diff = Math.PI - diff;
           }
           
-          if (Math.abs(spec.rotation - angle) < .00001) { // compare doubles with epsilon of .00001
-            spec.center.x += Math.sign(direction.x) * Math.min(Math.abs(normalized.x * (spec.speed * (elapsedTime / 1000))), Math.abs(direction.x));
-            spec.center.y += Math.sign(direction.y) * Math.min(Math.abs(normalized.y * (spec.speed * (elapsedTime / 1000))), Math.abs(direction.y));
-            // if (spec.center.x === point.x && spec.center.y === point.y) {
-            //   console.log("Arrived at point: " + point.x + ", " + point.y);
-            // }
-          }
-          else {
-            var diff = (angle - spec.rotation) % (2 * Math.PI);
-            if(diff > Math.PI){
-              diff = Math.PI - diff;
+          if (Math.abs(diff) > .00001) { // compare doubles with epsilon of .00001
+            var maxRotate = spec.rotateSpeed * remainingSecs;
+            if (spec.rotateSpeed * remainingSecs < Math.abs(diff)) {
+              spec.rotation += Math.sign(diff) * maxRotate;
+              return elapsedTime;
             }
-            var step = Math.sign(diff) * Math.min(spec.rotateSpeed * (elapsedTime / 1000), Math.abs(diff));
-            spec.rotation += step;
-            if (spec.rotation < -Math.PI / 2) {
-              spec.rotation += 2 * Math.PI;
-            }
-            else if (spec.rotation > 3 * Math.PI / 2) {
-              spec.rotation -= 2 * Math.PI;
+            else {
+              spec.rotation += diff;
+              remainingTime -= elapsedTime * ((maxRotate - Math.abs(diff)) / maxRotate);
+              remainingSecs = remainingTime / 1000;
             }
             // if (Math.abs(spec.rotation - angle) < .00001) {
             //   console.log("Arrived at angle: " + (angle / Math.PI) + "*PI");
             // }
           }
+          
+          var maxDistance = spec.speed * remainingSecs;
+          direction = {
+            x: targetPosition.x - spec.center.x,
+            y: targetPosition.y - spec.center.y
+          };
+          length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+          normalized = {
+            x: direction.x / length,
+            y: direction.y / length
+          };
+          if (maxDistance < length) {
+            spec.center.x += normalized.x * maxDistance;
+            spec.center.y += normalized.y * maxDistance;
+            return elapsedTime;
+          } else {
+            spec.center.x += direction.x;
+            spec.center.y += direction.y;
+            remainingTime -= elapsedTime * ((maxDistance - length) / maxDistance);
+            remainingSecs = remainingTime / 1000;
+          }
+          // if (spec.center.x === targetPosition.x && spec.center.y === targetPosition.y) {
+          //   console.log("Arrived at point: " + targetPosition.x + ", " + targetPosition.y);
+          // }
+          return elapsedTime - remainingTime;
         }
       }
 
@@ -674,7 +711,7 @@ DTD.components = (function(graphics) {
 
     entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
     entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
-
+    
     clearPaths = function(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
         var gridLine = [];
@@ -780,7 +817,7 @@ DTD.components = (function(graphics) {
       spriteSheet: 'images/creep/creep-1-blue/spriteSheet.png',
       rotation: 0,
       center: {x:2,y:2},
-      rotateSpeed: 40 / 4,
+      rotateSpeed: Math.PI / 2,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 40,
@@ -796,7 +833,7 @@ DTD.components = (function(graphics) {
       spriteSheet: 'images/creep/creep-2-green/spriteSheet.png',
       rotation: 0,
       center: {x:2,y:2},
-      rotateSpeed: 40 / 3,
+      rotateSpeed: Math.PI / 3,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 35,
@@ -810,9 +847,9 @@ DTD.components = (function(graphics) {
   function Creep_3(spec) {
     return Creep({
       spriteSheet: 'images/creep/creep-3-red/spriteSheet.png',
-      rotation: 0,
+      rotation: Math.PI / 2,
       center: {x:2,y:2},
-      rotateSpeed: 40 / 2,
+      rotateSpeed: Math.PI / 4,
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 30,
@@ -824,7 +861,7 @@ DTD.components = (function(graphics) {
   }
 
 
-	return {
+  return {
     Tower : Tower,
     Tower_1 : Tower_1,
     Tower_2 : Tower_2,
@@ -835,8 +872,8 @@ DTD.components = (function(graphics) {
     Creep_1 : Creep_1,
     Creep_2 : Creep_2,
     Creep_3 : Creep_3,
-		Constants: Constants,
-		Map : Map,
+    Constants: Constants,
+    Map : Map,
     ToolBox : ToolBox
-	};
+  };
 }(DTD.graphics));
