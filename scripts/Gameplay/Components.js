@@ -54,30 +54,6 @@ DTD.components = (function(graphics) {
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
 	};
-  
-  function Texture(imageSrc) {
-		var that = {},
-			ready = false,
-			image = new Image();
-		
-		// Load the image; override the draw function once it finished loading.
-		image.onload = function() { 
-            that.draw = function(spec) {
-                graphics.drawImage(image, spec);
-            };
-		};
-		image.src = imageSrc;
-		
-		// that.updateRotation = function(angle) {
-		// 	spec.rotation += angle;
-		// };
-		
-		that.draw = function() {
-		};
-		
-		return that;
-	}
-  
   // ------------------------------------------------------------------
     //
     // This represents the model for a Tower.  It knows how to
@@ -102,12 +78,16 @@ DTD.components = (function(graphics) {
       get highlight() {return highlight;}
         },
         highlight = false,
-            texture = Texture(spec.image),
+            texture = graphics.Texture(spec),
             targetRotation = spec.rotation,
             rotateSpeed = spec.rotateSpeed,
             validPosition = true;
         
         that.placed = false;
+        spec.width = Constants.TowerWidth;
+        spec.height = Constants.TowerHeight;
+        spec.opacity = 0.4;
+        
         that.setRotationSpeed = function(speed){
           rotateSpeed = speed;
         }
@@ -149,13 +129,7 @@ DTD.components = (function(graphics) {
                 height: Constants.TowerHeight,
                 fill: squareFill
             })
-            texture.draw({
-                center: spec.center,
-                width: Constants.TowerWidth,
-                height: Constants.TowerHeight,
-                rotation: spec.rotation,
-                opacity: 0.4
-            });
+            texture.draw();
         }
         
         function renderPlaced() {
@@ -176,14 +150,8 @@ DTD.components = (function(graphics) {
             stroke: spec.baseColor,
             fill: f,
             opacity: 0.4
-          })
-            texture.draw({
-                center: spec.center,
-                width: Constants.TowerWidth,
-                height: Constants.TowerHeight,
-                rotation: spec.rotation,
-                opacity: 1
-            });
+          });
+            texture.draw();
         }
         
         function renderSelected() {
@@ -204,6 +172,7 @@ DTD.components = (function(graphics) {
                 that.placed = true;
                 that.render = renderPlaced;
                 that.update = updatePlaced;
+                spec.opacity = 1;
             }
         }
         
@@ -234,6 +203,7 @@ DTD.components = (function(graphics) {
     //    rotation: creep rotation in radians
     //    rotateSpeed: speed of creep rotation in radians/second
     //    speed: creep speed in pixels/second
+    //    lifePoints: creep's starting life points
     //    image: relative path to image file for creep
     //    exitNumber: exit number to which creep should move
     //    

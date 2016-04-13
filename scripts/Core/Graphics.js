@@ -58,8 +58,7 @@ DTD.graphics = (function() {
 	// Expose an ability to draw an image/texture on the canvas.
 	//
 	//------------------------------------------------------------------
-	function drawImage(image, spec) {
-        //console.log("Rotation: " + spec.rotation);
+	function drawImage(spec) {
 		context.save();
 		
 		context.translate(spec.center.x, spec.center.y);
@@ -68,7 +67,7 @@ DTD.graphics = (function() {
 		
         context.globalAlpha = spec.opacity;
 		context.drawImage(
-			image,
+			spec.image,
 			spec.center.x - spec.width/2, 
 			spec.center.y - spec.height/2,
 			spec.width, spec.height);
@@ -185,6 +184,17 @@ DTD.graphics = (function() {
 		context.restore();
 	}
 
+  function Texture(spec) {
+      var that = {};
+      spec.image = AssetManager.getImage(spec.image);
+      
+      that.draw = function() {
+        drawImage(spec);
+      };
+      
+      return that;
+    }
+
 	//------------------------------------------------------------------
 	//
 	// Provides rendering support for a sprite animated from a sprite sheet.
@@ -192,44 +202,14 @@ DTD.graphics = (function() {
 	//------------------------------------------------------------------
 	function SpriteSheet(spec) {
 		var that = {},
-			image = new Image();
+			image = AssetManager.getImage(spec.spriteSheet);
 		//
 		// Initialize the animation of the spritesheet
 		spec.sprite = 0;		// Which sprite to start with
 		spec.elapsedTime = 0;	// How much time has occured in the animation
 		
-		//
-		// Load the image, set the ready flag once it is loaded so that
-		// rendering can begin.
-		image.onload = function() { 
-			//
-			// Our clever trick, replace the draw function once the image is loaded...no if statements!
-			that.draw = function() {
-				context.save();
-				
-				context.translate(spec.center.x, spec.center.y);
-				context.rotate(spec.rotation);
-				context.translate(-spec.center.x, -spec.center.y);
-				
-				//
-				// Pick the selected sprite from the sprite sheet to render
-				context.drawImage(
-					image,
-					spec.imgWidth * spec.sprite, 0,	// Which sprite to pick out
-					spec.imgWidth, spec.imgHeight,		// The size of the sprite
-					spec.center.x - spec.width/2,	// Where to draw the sprite
-					spec.center.y - spec.height/2,
-					spec.width, spec.height);
-				
-				context.restore();
-			};
-			//
-			// Once the image is loaded, we can compute the height and width based upon
-			// what we know of the image and the number of sprites in the sheet.
-			spec.imgHeight = image.height;
-			spec.imgWidth = image.width / spec.spriteCount;
-		};
-		image.src = spec.spriteSheet;
+    spec.imgHeight = image.height;
+    spec.imgWidth = image.width / spec.spriteCount;
 		
 		//------------------------------------------------------------------
 		//
@@ -265,13 +245,29 @@ DTD.graphics = (function() {
 		
 		//------------------------------------------------------------------
 		//
-		// Render the correct sprint from the sprite sheet
+		// Render the correct sprite from the sprite sheet
 		//
 		//------------------------------------------------------------------
-		that.draw = function() {
-			//
-			// Starts out empty, but gets replaced once the image is loaded!
-		};
+    that.draw = function() {
+      context.save();
+      
+      context.translate(spec.center.x, spec.center.y);
+      context.rotate(spec.rotation);
+      context.translate(-spec.center.x, -spec.center.y);
+      
+      //
+      // Pick the selected sprite from the sprite sheet to render
+      context.drawImage(
+        image,
+        spec.imgWidth * spec.sprite, 0,	// Which sprite to pick out
+        spec.imgWidth, spec.imgHeight,		// The size of the sprite
+        spec.center.x - spec.width/2,	// Where to draw the sprite
+        spec.center.y - spec.height/2,
+        spec.width, spec.height);
+      
+      context.restore();
+    };
+		
 			
 		return that;
 	}
@@ -285,6 +281,7 @@ DTD.graphics = (function() {
 		measureTextWidth: measureTextWidth,
 		measureTextHeight: measureTextHeight,
     relMouse : relMouse,
+    Texture : Texture,
     SpriteSheet : SpriteSheet
 	};
 }());
