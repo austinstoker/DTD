@@ -678,6 +678,23 @@ DTD.components = (function(graphics) {
       return dest;
     }
     
+    function getNearestCreep(center,radius){
+      if(creeps.length>0&& creeps.length%2===0){
+        return creeps[0];
+      }
+      return undefined;
+    }
+    
+    function checkCollisions(projectile){
+      for(var i = 0; i< creeps.length; i++ ){
+        var hit = intersectRectangles(projectile,creeps[i]);
+        if(hit){
+          creeps[i].hit(projectile.damage);
+          projectile.hit();
+        }
+      }
+    }
+    
     that.render = function(){
       graphics.drawRectangle({x:1,
                               y:0,
