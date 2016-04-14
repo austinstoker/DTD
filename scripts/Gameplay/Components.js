@@ -645,7 +645,7 @@ DTD.components = (function(graphics) {
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
         for(var e=0;e<entrances.length;e++){
-          grids[e] = updateShortestPaths(entrances[e].out,blocked);
+          grids[e] = updateShortestPaths(entrances[e].out,blocked,entrances[e].air);
         }
         towerInProgress.place();
         towerInProgress.setNearestCreepFunction(getNearestCreep);
@@ -667,7 +667,7 @@ DTD.components = (function(graphics) {
       //check blocking creep paths
       for(var e=0;e<entrances.length;e++){
         var tests = getCellsBlockedByTower(towerInProgress);
-        var tempGrid = updateShortestPaths(entrances[e].out,tests);
+        var tempGrid = updateShortestPaths(entrances[e].out,tests,entrances[e].air);
         if(tempGrid[entrances[e].in.i][entrances[e].in.j].d > 10000){
           towerInProgress.validPosition = false;
           return;
@@ -804,8 +804,11 @@ DTD.components = (function(graphics) {
       sumTime+=elapsedTime;
       if(sumTime>=2000){
         sumTime = 0;
-        addCreep(Creep_2({exitNumber:0}));
-        addCreep(Creep_3({exitNumber:1}));
+        addCreep(Creep_1({exitNumber:0}));
+        addCreep(Creep_2({exitNumber:1}));
+        addCreep(Creep_3({exitNumber:2})); //air
+        addCreep(Creep_3({exitNumber:3})); //air
+        
       }
       var toRemove=[];
       for(var i = 0; i<towers.length; i++)
@@ -827,7 +830,7 @@ DTD.components = (function(graphics) {
       }
     }
     
-    function updateShortestPaths(endPoint,tests){
+    function updateShortestPaths(endPoint,tests,isAir){
       var myGrid = [];
       myGrid = clearPaths(myGrid);
       var stack = [];
@@ -835,12 +838,14 @@ DTD.components = (function(graphics) {
       myGrid[endPoint.i][endPoint.j].d = 0;
       stack.push(endPoint);
       
-      for(var i=0; i<towers.length;i++){
-        blocked = getCellsBlockedByTower(towers[i]);
-        block(blocked);
-      }
-      if(tests!==undefined){
-        block(tests);
+      if(isAir===undefined||isAir===false){
+        for(var i=0; i<towers.length;i++){
+          blocked = getCellsBlockedByTower(towers[i]);
+          block(blocked);
+        }
+        if(tests!==undefined){
+          block(tests);
+        }
       }
       
       function block(cells){
@@ -986,8 +991,11 @@ DTD.components = (function(graphics) {
       }  
     }
 
-    entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
-    entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
+    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:false});
+    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:false});
+    
+    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:true});
+    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:true});
     
     function clearPaths(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
@@ -1015,7 +1023,7 @@ DTD.components = (function(graphics) {
     
     grids.length = 0;
     for(var e=0;e<entrances.length;e++){
-      grids.push(updateShortestPaths(entrances[e].out));
+      grids.push(updateShortestPaths(entrances[e].out,entrances[e].air));
     }
     
     cells.length = 0;
