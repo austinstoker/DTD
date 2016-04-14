@@ -19,6 +19,18 @@ DTD.components = (function(graphics) {
   
   //------------------------------------------------------------------
   //
+  // Tests to see if two circles intersect.  If they do, true is returned,
+  // false otherwise.
+  // Adapted from: http://stackoverflow.com/questions/1736734/circle-circle-collision
+  //
+  //------------------------------------------------------------------
+  function intersectCircles(c1, c2) {
+    if (c1 === undefined || c2 === undefined) return false;
+    return Math.pow(c1.center.x - c2.center.x, 2) + Math.pow(c1.center.y - c2.center.y, 2) <= Math.pow(c1.radius + c2.radius, 2);
+  }
+  
+  //------------------------------------------------------------------
+  //
   // Tests to see if two rectangles intersect.  If they do, true is returned,
   // false otherwise.
   // Adapted from: http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
@@ -40,6 +52,10 @@ DTD.components = (function(graphics) {
       p.y < r.bottom &&
       p.y > r.top
     );
+  }
+  
+  function intersectCirclePoint(c, p) {
+    return Math.pow(c.center.x - p.center.x, 2) + Math.pow(c.center.y - p.center.y, 2) <= Math.pow(c.radius, 2);
   }
   
   //
@@ -68,6 +84,7 @@ DTD.components = (function(graphics) {
         get top() { return spec.center.y - Constants.TowerHeight / 2 },
         get bottom() { return spec.center.y + Constants.TowerHeight / 2 },
         get center() { return spec.center },
+        get radius() { return spec.radius },
         get rotation() { return spec.rotation },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
@@ -76,23 +93,32 @@ DTD.components = (function(graphics) {
         set highlight(value) {highlight = value;},
         get highlight() {return highlight;}
       },
+        projectiles = [],
         highlight = false,
         texture = graphics.Texture(spec),
         targetRotation = spec.rotation,
         rotateSpeed = spec.rotateSpeed,
-        validPosition = true;
+        validPosition = true,
+        reloadTimeRemaining = 0,
+        targetCreep,
+        nearestCreepFunction,
+        projectileCollisionFunction;
         
         that.placed = false;
         spec.width = Constants.TowerWidth;
         spec.height = Constants.TowerHeight;
         spec.opacity = 0.4;
         
-        that.setRotationSpeed = function(speed){
-          rotateSpeed = speed;
+        that.setNearestCreepFunction = function(f) {
+          nearestCreepFunction = f;
         }
         
-        that.setRotation = function(rotation) {
-          targetRotation = rotation%(2*Math.PI);
+        that.setProjectileCollisionFunction = function(f) {
+          projectileCollisionFunction = f;
+        }
+        
+        that.setRotationSpeed = function(speed){
+          rotateSpeed = speed;
         }
         
         function updatePlacing(elapsedTime) {
@@ -100,12 +126,96 @@ DTD.components = (function(graphics) {
         }
         
         function updatePlaced(elapsedTime) {
+          updateTarget();
+          rotate(elapsedTime);
+          reloadTimeRemaining -= elapsedTime;
+          if (reloadTimeRemaining < 0) {
+            reloadTimeRemaining = 0;
+          }
+          if (targetCreep !== undefined && spec.rotation === targetRotation && reloadTimeRemaining === 0) {
+            fire();
+          }
+          updateProjectiles(elapsedTime);
+        }
+        
+        function updateTarget() {
+          if (!intersectCircles(that, targetCreep) || !targetCreep.alive()) {
+            // if (!intersectCircleRect(that, targetCreep)) {
+              if (nearestCreepFunction !== undefined) {
+                var target = nearestCreepFunction(spec.center, spec.radius);
+                if (targetCreep !== target) {
+                  targetCreep = target;
+                }
+              }
+          //   }
+          }
+          updateTargetRotation();
+        }
+        
+        function updateTargetRotation() {
+          if (targetCreep === undefined) {
+            targetRotation = spec.rotation;
+          } else {
+            var targetPosition = targetCreep.center,
+              direction = {
+                x: targetPosition.x - spec.center.x,
+                y: targetPosition.y - spec.center.y
+              };
+            if (direction.x !== 0) {
+              targetRotation = Math.atan(direction.y / direction.x);
+              if (direction.x < 0) {
+                targetRotation += Math.PI;
+              }
+              else if (targetRotation < 0) {
+                targetRotation += 2 * Math.PI;
+              }
+            } else {
+              targetRotation = Math.PI / 2;
+            }
+          }
+        }
+        
+        function updateProjectiles(elapsedTime) {
+          var removeMe = [];
+          for (var i = 0; i < projectiles.length; i++) {
+            projectiles[i].update(elapsedTime);
+            if (projectiles[i].didHit || !intersectCirclePoint(that, projectiles[i])) {
+              removeMe.push(i);
+            }
+          }
+          
+          for (var i = removeMe.length - 1; i >= 0; i--) {
+            projectiles.splice(removeMe[i], 1);
+          }
+          removeMe.length = 0;
+        }
+        
+        function rotate(elapsedTime) {
           var diff = (targetRotation - spec.rotation)%(2*Math.PI);
           if(diff>Math.PI){
             diff = Math.PI-diff;
           }
-          var step = Math.sign(diff)*Math.min(rotateSpeed*elapsedTime,Math.abs(diff));
+          var step = Math.sign(diff)*Math.min(rotateSpeed*elapsedTime/1000,Math.abs(diff));
           spec.rotation += step;
+        }
+
+        function fire() {
+          var proj = Projectile({
+            center: {
+              x: spec.center.x,
+              y: spec.center.y
+            },
+            speed: 50,
+            direction: {
+              x: Math.cos(spec.rotation),
+              y: Math.sin(spec.rotation)
+            },
+            damage: 0,
+            freezePower: .5,
+          });
+          proj.setCheckCollisionsFunction(projectileCollisionFunction);
+          projectiles.push(proj);
+          reloadTimeRemaining = spec.reloadTime * 1000;
         }
 
         function renderPlacing() {
@@ -150,6 +260,9 @@ DTD.components = (function(graphics) {
             fill: f,
             opacity: 0.4
           });
+          for (var i = 0; i < projectiles.length; i++) {
+            projectiles[i].render();
+          }
           texture.draw();
         }
         
@@ -190,6 +303,45 @@ DTD.components = (function(graphics) {
         return that;
     }
     
+    function Projectile(spec) {
+      var that = {
+        get center() { return spec.center },
+        get damage() { return spec.damage },
+        get freezePower() {return spec.freezePower },
+        get x() { return spec.center.x },
+        get y() { return spec.center.y }
+      },
+        checkCollisionsFunction;
+      that.didHit = false;
+      
+      that.setCheckCollisionsFunction = function(f) {
+        checkCollisionsFunction = f;
+      }
+      
+      that.update = function(elapsedTime) {
+        spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
+        spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+        if (checkCollisionsFunction !== undefined) {
+          checkCollisionsFunction(that);
+        }
+      }
+      
+      that.render = function() {
+        graphics.drawCircle({
+          x: spec.center.x,
+          y: spec.center.y,
+          radius: 3,
+          fill: 'black'
+        })
+      }
+      
+      that.hit = function() {
+        that.didHit = true;
+      }
+      
+      return that;
+    }
+    
     // ------------------------------------------------------------------
     //
     // This represents the model for a Creep.  It knows how to
@@ -214,9 +366,11 @@ DTD.components = (function(graphics) {
         get top() { return spec.center.y - spec.height / 2 },
         get bottom() { return spec.center.y + spec.height / 2 },
         get center() { return spec.center },
+        get prevCenter() {return spec.prevCenter },
         get rotation() { return spec.rotation },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
+        get radius() { return Math.min(spec.width, spec.height)/2; } // A tight radius, for a circle inscribed in the creep
       },
       sprite = graphics.SpriteSheet(spec),
       targetPosition = spec.center,
@@ -231,6 +385,12 @@ DTD.components = (function(graphics) {
           spec.lifePoints = 0;
         }
       }
+      
+      that.slow = function(slowBy) {
+        if(spec.speed<slowBy){return}
+        spec.speed -= slowBy;
+      }
+      
       
       that.alive = function() {
         return spec.lifePoints > 0;
@@ -285,6 +445,7 @@ DTD.components = (function(graphics) {
       
       // Returns the amount of time "spent" rotating and moving
       function rotateAndMove(elapsedTime) {
+        spec.prevCenter=spec.center;
         if (spec.center.x !== targetPosition.x || spec.center.y !== targetPosition.y) {
           var direction, length, normalized,
             remainingTime = elapsedTime,
@@ -421,6 +582,34 @@ DTD.components = (function(graphics) {
     return that;
   }
   
+  function Cell(){
+    var that = {};
+    var creeps = [];
+    
+    that.addCreep = function(creep){
+      creeps.push(creep);
+    }
+    
+    that.checkCollsions = function(projectile){
+      for(var i = 0; i< creeps.length; i++ ){
+        var hit = intersectRectangles(projectile,creeps[i]);
+        if(hit){
+          creeps[i].hit(projectile.damage);
+          creeps[i].slow(projectile.freezePower);
+          projectile.hit();
+          break;
+        }
+      }
+    }
+    
+    that.removeCreep = function(creep){
+      var idx= creeps.indexOf(creep);
+      if(idx!==undefined){
+        creeps.splice(idx);
+      }
+    }
+  }
+  
   function Map(spec){
     var that = {};
     var towers = [];
@@ -456,9 +645,11 @@ DTD.components = (function(graphics) {
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
         for(var e=0;e<entrances.length;e++){
-          grids[e] = updateShortestPaths(entrances[e].out,blocked);
+          grids[e] = updateShortestPaths(entrances[e].out,blocked,entrances[e].air);
         }
         towerInProgress.place();
+        towerInProgress.setNearestCreepFunction(getNearestCreep);
+        towerInProgress.setProjectileCollisionFunction(checkCollisions);
         towerInProgress = newTowerConstructor();
         moveTower(pos);
       }
@@ -476,7 +667,7 @@ DTD.components = (function(graphics) {
       //check blocking creep paths
       for(var e=0;e<entrances.length;e++){
         var tests = getCellsBlockedByTower(towerInProgress);
-        var tempGrid = updateShortestPaths(entrances[e].out,tests);
+        var tempGrid = updateShortestPaths(entrances[e].out,tests,entrances[e].air);
         if(tempGrid[entrances[e].in.i][entrances[e].in.j].d > 10000){
           towerInProgress.validPosition = false;
           return;
@@ -509,6 +700,10 @@ DTD.components = (function(graphics) {
       return out;
     }
     
+    function dist2(pos1, pos2){
+      return Math.pow((pos1.x-pos2.x),2)+Math.pow((pos1.y-pos2.y),2);
+    }
+    
     function toScreenUnits(pos){
       var out = {};
       out.x = pos.i*Constants.GridWidth;
@@ -528,6 +723,24 @@ DTD.components = (function(graphics) {
       creep.centerY = coords.y+Constants.CreepHeight/2;
       creep.setPathFindingFunction(nextStepTowardExit);
       creeps.push(creep);
+    }
+    
+    function updateCreepCells(creep){
+      var curCell = toMapUnits(creep.center);
+      var prevCell = toMapUnits(creep.prevCenter);
+      if(curCell.i===prevCell.i && curCell.j===prevCell.j){
+        return;
+      }
+      for(var i= prevCell.i-1; i<=prevCell.i+1;i++){
+        for(var j= prevCell.j-1; j<=prevCell.j+1;j++){
+          cells[i][j].removeCreep(creep);
+        }
+      }
+      for(var i= curCell.i-1; i<=curCell.i+1;i++){
+        for(var j= curCell.j-1; j<=curCell.j+1;j++){
+          cells[i][j].addCreep(creep);
+        }
+      }
     }
     
     that.addCreep = function(creep){
@@ -586,23 +799,38 @@ DTD.components = (function(graphics) {
     }
     
     that.update = function(elapsedTime){
+      //TODO This is just an easy way to add creeps at a reasonable rate
+      // this should be replaced with something better when levels are implemented
       sumTime+=elapsedTime;
       if(sumTime>=2000){
         sumTime = 0;
-        addCreep(Creep_2({exitNumber:0}));
-        addCreep(Creep_3({exitNumber:1}));
+        addCreep(Creep_1({exitNumber:0}));
+        addCreep(Creep_2({exitNumber:1}));
+        addCreep(Creep_3({exitNumber:2})); //air
+        addCreep(Creep_3({exitNumber:3})); //air
+        
       }
+      var toRemove=[];
       for(var i = 0; i<towers.length; i++)
       {
         towers[i].update(elapsedTime);
       }
       for(var i = 0; i<creeps.length; i++)
       {
+        if(!creeps[i].alive())
+        {
+          toRemove.push(i);
+        }
         creeps[i].update(elapsedTime);
+        updateCreepCells(creeps[i]);
+      }
+      for(var i = toRemove.length-1; i>=0;i--){
+        creeps.splice(toRemove[i],1);
+        console.log(creeps.length);
       }
     }
     
-    function updateShortestPaths(endPoint,tests){
+    function updateShortestPaths(endPoint,tests,isAir){
       var myGrid = [];
       myGrid = clearPaths(myGrid);
       var stack = [];
@@ -610,12 +838,14 @@ DTD.components = (function(graphics) {
       myGrid[endPoint.i][endPoint.j].d = 0;
       stack.push(endPoint);
       
-      for(var i=0; i<towers.length;i++){
-        blocked = getCellsBlockedByTower(towers[i]);
-        block(blocked);
-      }
-      if(tests!==undefined){
-        block(tests);
+      if(isAir===undefined||isAir===false){
+        for(var i=0; i<towers.length;i++){
+          blocked = getCellsBlockedByTower(towers[i]);
+          block(blocked);
+        }
+        if(tests!==undefined){
+          block(tests);
+        }
       }
       
       function block(cells){
@@ -679,17 +909,50 @@ DTD.components = (function(graphics) {
     }
     
     function getNearestCreep(center,radius){
-      if(creeps.length>0&& creeps.length%2===0){
-        return creeps[0];
+      //return creeps[0];
+      //var location = toMapUnits(center);
+      var nearestCreep = undefined;
+      //var r = toMapUnits({x:radius,y:radius});
+      for(var i = 0; i< creeps.length; i++){
+        var oldDist = 100000;
+        if(nearestCreep!==undefined){
+          oldDist = dist2(center,nearestCreep.center);
+        }
+        var newDist = dist2(center,creeps[i].center);
+        if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
+          nearestCreep = creeps[i];
+        }
       }
-      return undefined;
+      
+      // for(var i = location.i-r.i; i<= location.i+r.i; i++ ){
+      //   for(var j = location.j-r.j1; j<= location.j+r.j; j++ ){
+      //     var creep = cells[i][j].getNearestCreep(center,radius);
+      //     if(creep===undefined){continue;}
+      //     if(nearestCreep===undefined){
+      //       nearestCreep = creep;
+      //     }
+      //     intersectRectangles
+      //     if(dist2(center,creep)<dist2(center,nearestCreep)){
+      //       nearestCreep = creep;
+      //     }
+      //   }
+      // }
+      return nearestCreep;
     }
     
     function checkCollisions(projectile){
+      // var location = toMapUnits(projectile.center);
+      // for(var i = location.i-1; i<= location.i+1; i++ ){
+      //   for(var j = location.j-1; j<= location.j+1; j++ ){
+      //     cells[i][j].checkCollsions(projectile);
+      //   }
+      // }
+
       for(var i = 0; i< creeps.length; i++ ){
-        var hit = intersectRectangles(projectile,creeps[i]);
+        var hit = intersectPoint(creeps[i], projectile);
         if(hit){
           creeps[i].hit(projectile.damage);
+          creeps[i].slow(projectile.freezePower);
           projectile.hit();
         }
       }
@@ -728,8 +991,11 @@ DTD.components = (function(graphics) {
       }  
     }
 
-    entrances.push({in:{i:0,j:14},out:{i:29, j:14}});
-    entrances.push({in:{i:15,j:0},out:{i:15, j:29}});
+    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:false});
+    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:false});
+    
+    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:true});
+    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:true});
     
     function clearPaths(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
@@ -757,8 +1023,18 @@ DTD.components = (function(graphics) {
     
     grids.length = 0;
     for(var e=0;e<entrances.length;e++){
-      grids.push(updateShortestPaths(entrances[e].out));
+      grids.push(updateShortestPaths(entrances[e].out,entrances[e].air));
     }
+    
+    cells.length = 0;
+    for(var i= 0; i<=spec.width/Constants.GridWidth;i++){
+      var row = []
+      for(var j= 0; j<=spec.height/Constants.GridHeight;j++){
+        row.push(Cell());
+      }
+      cells.push(row);
+    }
+    
     return that;
   }
 
@@ -766,10 +1042,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-1-1.png',
       baseColor: 'red',
-      rotation: 0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:50,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 0.25
     });
     return that;
   }
@@ -778,10 +1055,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-2-1.png',
       baseColor: 'orange',
-      rotation:0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:50,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 0.5
     });
     return that;
   }
@@ -790,10 +1068,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-3-1.png',
       baseColor: 'yellow',
-      rotation:0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:100,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 1
     });
     return that;
   }
@@ -801,10 +1080,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-4-1.png',
       baseColor: 'green',
-      rotation:0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:30,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 1.5
     });
     return that;
   }
@@ -812,10 +1092,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-5-1.png',
       baseColor: 'blue',
-      rotation:0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:40,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 1.5
     });
     return that;
   }
@@ -823,10 +1104,11 @@ DTD.components = (function(graphics) {
     var that = Tower({
       image: 'images/tower-defense-turrets/turret-6-1.png',
       baseColor: 'purple',
-      rotation:0,
+      rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius:80,
-      rotateSpeed: 10
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 2
     });
     return that;
   }
