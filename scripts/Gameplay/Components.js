@@ -210,7 +210,7 @@ DTD.components = (function(graphics) {
               x: Math.cos(spec.rotation),
               y: Math.sin(spec.rotation)
             },
-            damage: .1,
+            damage: 1,
           });
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
           projectiles.push(proj);
@@ -905,7 +905,7 @@ DTD.components = (function(graphics) {
           oldDist = dist2(center,nearestCreep.center);
         }
         var newDist = dist2(center,creeps[i].center);
-        if(newDist < Math.pow(radius,2) && newDist<oldDist){
+        if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
           nearestCreep = creeps[i];
         }
       }
