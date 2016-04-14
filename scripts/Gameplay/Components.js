@@ -210,7 +210,8 @@ DTD.components = (function(graphics) {
               x: Math.cos(spec.rotation),
               y: Math.sin(spec.rotation)
             },
-            damage: 1,
+            damage: 0,
+            freezePower: .5,
           });
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
           projectiles.push(proj);
@@ -306,6 +307,7 @@ DTD.components = (function(graphics) {
       var that = {
         get center() { return spec.center },
         get damage() { return spec.damage },
+        get freezePower() {return spec.freezePower },
         get x() { return spec.center.x },
         get y() { return spec.center.y }
       },
@@ -383,6 +385,12 @@ DTD.components = (function(graphics) {
           spec.lifePoints = 0;
         }
       }
+      
+      that.slow = function(slowBy) {
+        if(spec.speed<slowBy){return}
+        spec.speed -= slowBy;
+      }
+      
       
       that.alive = function() {
         return spec.lifePoints > 0;
@@ -587,6 +595,7 @@ DTD.components = (function(graphics) {
         var hit = intersectRectangles(projectile,creeps[i]);
         if(hit){
           creeps[i].hit(projectile.damage);
+          creeps[i].slow(projectile.freezePower);
           projectile.hit();
           break;
         }
@@ -938,6 +947,7 @@ DTD.components = (function(graphics) {
         var hit = intersectPoint(creeps[i], projectile);
         if(hit){
           creeps[i].hit(projectile.damage);
+          creeps[i].slow(projectile.freezePower);
           projectile.hit();
         }
       }
