@@ -214,6 +214,7 @@ DTD.components = (function(graphics) {
         get top() { return spec.center.y - spec.height / 2 },
         get bottom() { return spec.center.y + spec.height / 2 },
         get center() { return spec.center },
+        get prevCenter() {return spec.prevCenter },
         get rotation() { return spec.rotation },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
@@ -285,6 +286,7 @@ DTD.components = (function(graphics) {
       
       // Returns the amount of time "spent" rotating and moving
       function rotateAndMove(elapsedTime) {
+        spec.prevCenter=spec.center;
         if (spec.center.x !== targetPosition.x || spec.center.y !== targetPosition.y) {
           var direction, length, normalized,
             remainingTime = elapsedTime,
@@ -421,6 +423,33 @@ DTD.components = (function(graphics) {
     return that;
   }
   
+  function Cell(){
+    var that = {};
+    var creeps = [];
+    
+    that.addCreep = function(creep){
+      creeps.push(creep);
+    }
+    
+    that.checkCollsions = function(projectile){
+      for(var i = 0; i< creeps.length; i++ ){
+        var hit = intersectRectangles(projectile,creeps[i]);
+        if(hit){
+          creeps[i].hit(projectile.damage);
+          projectile.hit();
+          break;
+        }
+      }
+    }
+    
+    that.removeCreep = function(creep){
+      var idx= creeps.indexOf(creep);
+      if(idx!==undefined){
+        creeps.splice(idx);
+      }
+    }
+  }
+  
   function Map(spec){
     var that = {};
     var towers = [];
@@ -509,6 +538,10 @@ DTD.components = (function(graphics) {
       return out;
     }
     
+    function dist2(pos1, pos2){
+      return (pos1.x-pos2.x)^2+(pos1.y-pos2.y)^2
+    }
+    
     function toScreenUnits(pos){
       var out = {};
       out.x = pos.i*Constants.GridWidth;
@@ -528,6 +561,24 @@ DTD.components = (function(graphics) {
       creep.centerY = coords.y+Constants.CreepHeight/2;
       creep.setPathFindingFunction(nextStepTowardExit);
       creeps.push(creep);
+    }
+    
+    function updateCreepCells(creep){
+      var curCell = toMapUnits(creep.center);
+      var prevCell = toMapUnits(creep.prevCenter);
+      if(curCell.i===prevCell.i && curCell.j===prevCell.j){
+        return;
+      }
+      for(var i= prevCell.i-1; i<=prevCell.i+1;i++){
+        for(var j= prevCell.j-1; j<=prevCell.j+1;j++){
+          cells[i][j].removeCreep(creep);
+        }
+      }
+      for(var i= curCell.i-1; i<=curCell.i+1;i++){
+        for(var j= curCell.j-1; j<=curCell.j+1;j++){
+          cells[i][j].addCreep(creep);
+        }
+      }
     }
     
     that.addCreep = function(creep){
@@ -586,6 +637,8 @@ DTD.components = (function(graphics) {
     }
     
     that.update = function(elapsedTime){
+      //TODO This is just an easy way to add creeps at a reasonable rate
+      // this should be replaced with something better when levels are implemented
       sumTime+=elapsedTime;
       if(sumTime>=2000){
         sumTime = 0;
@@ -599,6 +652,7 @@ DTD.components = (function(graphics) {
       for(var i = 0; i<creeps.length; i++)
       {
         creeps[i].update(elapsedTime);
+        updateCreepCells(creeps[i]);
       }
     }
     
@@ -679,19 +733,30 @@ DTD.components = (function(graphics) {
     }
     
     function getNearestCreep(center,radius){
-      if(creeps.length>0&& creeps.length%2===0){
-        return creeps[0];
+      var location = toMapUnits(center);
+      var nearestCreep = undefined;
+      var r = toMapUnits({x:radius,y:radius});
+      
+      for(var i = location.i-r.i; i<= location.i+r.i; i++ ){
+        for(var j = location.j-r.j1; j<= location.j+r.j; j++ ){
+          var creep = cells[i][j].getNearestCreep(center,radius);
+          if(creep===undefined){continue;}
+          if(nearestCreep===undefined){
+            nearestCreep = creep;
+          }
+          intersectRectangles
+          if(dist2(center,creep)<dist2(center,nearestCreep)){
+            nearestCreep = creep;
+          }
       }
-      return undefined;
+      return nearestCreep;
     }
     
     function checkCollisions(projectile){
-      for(var i = 0; i< creeps.length; i++ ){
-        var hit = intersectRectangles(projectile,creeps[i]);
-        if(hit){
-          creeps[i].hit(projectile.damage);
-          projectile.hit();
-        }
+      var location = toMapUnits(projectile.center);
+      for(var i = location.i-1; i<= location.i+1; i++ ){
+        for(var j = location.j-1; j<= location.j+1; j++ ){
+          cells[i][j].checkCollsions(projectile);
       }
     }
     
@@ -759,6 +824,16 @@ DTD.components = (function(graphics) {
     for(var e=0;e<entrances.length;e++){
       grids.push(updateShortestPaths(entrances[e].out));
     }
+    
+    cells.length = 0;
+    for(var i= 0; i<=spec.width/Constants.GridWidth;i++){
+      var row = []
+      for(var j= 0; j<=spec.height/Constants.GridHeight;j++){
+        row.push(Cell());
+      }
+      cells.push(row);
+    }
+    
     return that;
   }
 
