@@ -210,7 +210,7 @@ DTD.components = (function(graphics) {
               x: Math.cos(spec.rotation),
               y: Math.sin(spec.rotation)
             },
-            damage: 10,
+            damage: .1,
           });
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
           projectiles.push(proj);
@@ -692,7 +692,7 @@ DTD.components = (function(graphics) {
     }
     
     function dist2(pos1, pos2){
-      return (pos1.x-pos2.x)^2+(pos1.y-pos2.y)^2
+      return Math.pow((pos1.x-pos2.x),2)+Math.pow((pos1.y-pos2.y),2);
     }
     
     function toScreenUnits(pos){
@@ -895,24 +895,34 @@ DTD.components = (function(graphics) {
     }
     
     function getNearestCreep(center,radius){
-      return creeps[0];
-      var location = toMapUnits(center);
+      //return creeps[0];
+      //var location = toMapUnits(center);
       var nearestCreep = undefined;
-      var r = toMapUnits({x:radius,y:radius});
-      
-      for(var i = location.i-r.i; i<= location.i+r.i; i++ ){
-        for(var j = location.j-r.j1; j<= location.j+r.j; j++ ){
-          var creep = cells[i][j].getNearestCreep(center,radius);
-          if(creep===undefined){continue;}
-          if(nearestCreep===undefined){
-            nearestCreep = creep;
-          }
-          intersectRectangles
-          if(dist2(center,creep)<dist2(center,nearestCreep)){
-            nearestCreep = creep;
-          }
+      //var r = toMapUnits({x:radius,y:radius});
+      for(var i = 0; i< creeps.length; i++){
+        var oldDist = 100000;
+        if(nearestCreep!==undefined){
+          oldDist = dist2(center,nearestCreep.center);
+        }
+        var newDist = dist2(center,creeps[i].center);
+        if(newDist < Math.pow(radius,2) && newDist<oldDist){
+          nearestCreep = creeps[i];
         }
       }
+      
+      // for(var i = location.i-r.i; i<= location.i+r.i; i++ ){
+      //   for(var j = location.j-r.j1; j<= location.j+r.j; j++ ){
+      //     var creep = cells[i][j].getNearestCreep(center,radius);
+      //     if(creep===undefined){continue;}
+      //     if(nearestCreep===undefined){
+      //       nearestCreep = creep;
+      //     }
+      //     intersectRectangles
+      //     if(dist2(center,creep)<dist2(center,nearestCreep)){
+      //       nearestCreep = creep;
+      //     }
+      //   }
+      // }
       return nearestCreep;
     }
     
