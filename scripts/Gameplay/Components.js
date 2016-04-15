@@ -1,5 +1,5 @@
 
-DTD.components = (function(graphics) {
+DTD.components = (function(graphics,particles) {
 
   //------------------------------------------------------------------
   //
@@ -309,16 +309,19 @@ DTD.components = (function(graphics) {
     
     function Projectile(spec) {
       var that = {
-        get center() { return spec.center; },
-        get damage() { return spec.damage; },
+        get center() { return spec.center },
+        get damage() { return spec.damage },
         get x() { return spec.center.x; },
         get y() { return spec.center.y; },
         get radius() { return spec.damageRadius; },
         get freezePower() { return spec.freezePower; },
         get damageRadius() { return spec.damageRadius; },
         get type() { return spec.type; }
-      };
-      that.checkCollisionsFunction;
+      },
+        checkCollisionsFunction,
+        timeSincePuff = 0,
+        puffSpacing = spec.puffSpace | 100;
+        
       that.didHit = false;
       
       that.setCheckCollisionsFunction = function(f) {
@@ -328,8 +331,14 @@ DTD.components = (function(graphics) {
       that.update = function(elapsedTime) {
         spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
         spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
-        if (that.checkCollisionsFunction !== undefined) {
-          that.checkCollisionsFunction(that);
+        timeSincePuff+=elapsedTime;
+        if(timeSincePuff>puffSpacing)
+        {
+          timeSincePuff=0;
+          particles.smokePuff({center:spec.center});
+        }
+        if (checkCollisionsFunction !== undefined) {
+          checkCollisionsFunction(that);
         }
       }
       
@@ -854,6 +863,9 @@ DTD.components = (function(graphics) {
       {
         if(!creeps[i].alive())
         {
+          particles.creepDeath({
+            center: creeps[i].center
+          });
           toRemove.push(i);
         }
         creeps[i].update(elapsedTime);
@@ -1300,4 +1312,4 @@ DTD.components = (function(graphics) {
     Map : Map,
     ToolBox : ToolBox
   };
-}(DTD.graphics));
+}(DTD.graphics, DTD.particles));
