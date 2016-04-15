@@ -1,5 +1,5 @@
 
-DTD.components = (function(graphics) {
+DTD.components = (function(graphics,particles) {
 
   //------------------------------------------------------------------
   //
@@ -210,7 +210,7 @@ DTD.components = (function(graphics) {
               x: Math.cos(spec.rotation),
               y: Math.sin(spec.rotation)
             },
-            damage: 0,
+            damage: 1,
             freezePower: .5,
           });
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
@@ -819,6 +819,9 @@ DTD.components = (function(graphics) {
       {
         if(!creeps[i].alive())
         {
+          particles.creepDeath({
+            center: creeps[i].center
+          });
           toRemove.push(i);
         }
         creeps[i].update(elapsedTime);
@@ -1177,4 +1180,4 @@ DTD.components = (function(graphics) {
     Map : Map,
     ToolBox : ToolBox
   };
-}(DTD.graphics));
+}(DTD.graphics, DTD.particles));
