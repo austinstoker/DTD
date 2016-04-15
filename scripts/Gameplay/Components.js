@@ -328,15 +328,19 @@ DTD.components = (function(graphics,particles) {
         spec.checkCollisionsFunction = f;
       }
       
-      that.update = function(elapsedTime) {
-        spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
-        spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+      that.updateSmoke = function(elapsedTime){
         timeSincePuff+=elapsedTime;
         if(timeSincePuff>puffSpacing)
         {
           timeSincePuff=0;
           particles.smokePuff({center:spec.center});
         }
+      }
+      
+      that.update = function(elapsedTime) {
+        spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
+        spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+        that.updateSmoke(elapsedTime);
         if (spec.checkCollisionsFunction !== undefined) {
           spec.checkCollisionsFunction(that);
         }
@@ -378,6 +382,7 @@ DTD.components = (function(graphics,particles) {
         if (spec.targetCreep.alive()) {
           calculateDirection();
         }
+        that.updateSmoke(elapsedTime);
         spec.center.x += direction.x * spec.speed * (elapsedTime / 1000);
         spec.center.y += direction.y * spec.speed * (elapsedTime / 1000);
         if (spec.checkCollisionsFunction !== undefined) {
@@ -846,8 +851,8 @@ DTD.components = (function(graphics,particles) {
       //TODO This is just an easy way to add creeps at a reasonable rate
       // this should be replaced with something better when levels are implemented
       sumTime+=elapsedTime;
-      if(sumTime>=2000){
-        sumTime = -200000;
+      if(sumTime>=5000){
+        sumTime = 0;
         addCreep(Creep_1({exitNumber:0}));
         addCreep(Creep_2({exitNumber:1}));
         addCreep(Creep_3({exitNumber:2})); //air
@@ -1216,7 +1221,7 @@ DTD.components = (function(graphics,particles) {
       baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius: 40,
+      radius: 200,
       rotateSpeed: Math.PI / 4,
       reloadTime: 1,
       fill: 'green',

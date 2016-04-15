@@ -19,7 +19,7 @@ DTD.particles =  (function(graphics) {
 	//------------------------------------------------------------------
 	that.createBoxEffect = function(inVal) {
     var xdiv = inVal.div ||10;
-    var ydiv = inVal.div ||10;
+    var ydiv = 10;
     var dim = inVal.dim;
 		var dx = dim/xdiv,
 		  dy = dim/ydiv,
@@ -43,7 +43,7 @@ DTD.particles =  (function(graphics) {
 						direction: {x:Random.nextGaussian(0, 3),y:Random.nextGaussian(0, 3)},
 						speed: Random.nextGaussian(inVal.baseSpeed, inVal.baseSpeed/4), // pixels per second
 						rotation: Random.nextGaussian(4, 1),
-						lifetime: Random.nextGaussian(1, 1),	// How long the particle should live, in seconds
+						lifetime: Random.nextGaussian(inVal.baseLife, inVal.baseLife/3),	// How long the particle should live, in seconds
 						alive: 0	// How long the particle has been alive, in seconds
 					};
 				//
@@ -64,6 +64,7 @@ DTD.particles =  (function(graphics) {
       dim:.1,
       color:'white',
       baseSpeed:1,
+      baseLife:.7,
     });
   }
   
@@ -73,6 +74,7 @@ DTD.particles =  (function(graphics) {
       dim:40,
       color:'green',
       baseSpeed: 4,
+      baseLife: 1
     });
   }
 	
