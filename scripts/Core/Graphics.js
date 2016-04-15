@@ -284,4 +284,4 @@ DTD.graphics = (function() {
     Texture : Texture,
     SpriteSheet : SpriteSheet
 	};
-}(DTD.graphics));
+}());
