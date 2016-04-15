@@ -1,4 +1,4 @@
-DTD.model = (function(components, graphics, input) {
+DTD.model = (function(components, graphics, input, particles) {
     var map = components.Map({
       width:600,
       height:600
@@ -35,11 +35,13 @@ DTD.model = (function(components, graphics, input) {
     function update(elapsedTime) {
       elapsedTime = Math.min(elapsedTime,200);
       map.update(elapsedTime);
+      particles.update(elapsedTime);
     }
 
     function render() {
         map.render();
         toolBox.render();
+        particles.render();
     }
 
     function gameLoop(elapsedTime) {
@@ -69,4 +71,4 @@ DTD.model = (function(components, graphics, input) {
         update: update,
         render: render
     }
-}(DTD.components, DTD.graphics, DTD.input));
+}(DTD.components, DTD.graphics, DTD.input, DTD.particles));
