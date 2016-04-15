@@ -210,7 +210,7 @@ DTD.components = (function(graphics,particles) {
               x: Math.cos(spec.rotation),
               y: Math.sin(spec.rotation)
             },
-            damage: 1,
+            damage: 7,
             freezePower: .5,
           });
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
@@ -311,7 +311,10 @@ DTD.components = (function(graphics,particles) {
         get x() { return spec.center.x },
         get y() { return spec.center.y }
       },
-        checkCollisionsFunction;
+        checkCollisionsFunction,
+        timeSincePuff = 0,
+        puffSpacing = spec.puffSpace | 100;
+        
       that.didHit = false;
       
       that.setCheckCollisionsFunction = function(f) {
@@ -321,6 +324,12 @@ DTD.components = (function(graphics,particles) {
       that.update = function(elapsedTime) {
         spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
         spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+        timeSincePuff+=elapsedTime;
+        if(timeSincePuff>puffSpacing)
+        {
+          timeSincePuff=0;
+          particles.smokePuff({center:spec.center});
+        }
         if (checkCollisionsFunction !== undefined) {
           checkCollisionsFunction(that);
         }
