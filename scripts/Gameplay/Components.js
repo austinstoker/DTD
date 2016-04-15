@@ -67,6 +67,9 @@ DTD.components = (function(graphics) {
     get CreepWidth() { return 40; },
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
+    get GroundType() { return 'ground'; },
+    get AirType() { return 'air'; },
+    get MixedType() { return 'mixed'; }
   };
 
   // ------------------------------------------------------------------
@@ -91,7 +94,8 @@ DTD.components = (function(graphics) {
         set validPosition(value) { validPosition = value},
         get validPosition() { return validPosition;},
         set highlight(value) {highlight = value;},
-        get highlight() {return highlight;}
+        get highlight() {return highlight;},
+        get type() { return spec.type; }
       },
         projectiles = [],
         highlight = false,
@@ -102,6 +106,14 @@ DTD.components = (function(graphics) {
         reloadTimeRemaining = 0,
         nearestCreepFunction,
         projectileCollisionFunction;
+        // base = graphics.Texture({
+        //   image: 'images/tower-defense-turrets/turret-base.gif',
+        //   width: Constants.TowerWidth,
+        //   height: Constants.TowerHeight,
+        //   center: spec.center,
+        //   rotation: 0,
+        //   test: true
+        // });
         
       that.placed = false;
       spec.width = Constants.TowerWidth;
@@ -142,7 +154,7 @@ DTD.components = (function(graphics) {
           if (!intersectCircles(that, spec.targetCreep) || !spec.targetCreep.alive()) {
             // if (!intersectCircleRect(that, spec.targetCreep)) {
               if (nearestCreepFunction !== undefined) {
-                var target = nearestCreepFunction(spec.center, spec.radius);
+                var target = nearestCreepFunction(spec.center, spec.radius, spec.type);
                 if (spec.targetCreep !== target) {
                   spec.targetCreep = target;
                 }
@@ -251,6 +263,7 @@ DTD.components = (function(graphics) {
             fill: f,
             opacity: 0.4
           });
+          // base.draw();
           for (var i = 0; i < projectiles.length; i++) {
             projectiles[i].render();
           }
@@ -303,6 +316,7 @@ DTD.components = (function(graphics) {
         get radius() { return spec.damageRadius; },
         get freezePower() { return spec.freezePower; },
         get damageRadius() { return spec.damageRadius; },
+        get type() { return spec.type; }
       };
       that.checkCollisionsFunction;
       that.didHit = false;
@@ -393,6 +407,7 @@ DTD.components = (function(graphics) {
         get rotation() { return spec.rotation },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
+        get type() { return spec.type; },
         get radius() { return Math.min(spec.width, spec.height)/2; } // A tight radius, for a circle inscribed in the creep
       },
       sprite = graphics.SpriteSheet(spec),
@@ -927,19 +942,21 @@ DTD.components = (function(graphics) {
       return dest;
     }
     
-    function getNearestCreep(center,radius){
+    function getNearestCreep(center, radius, type) {
       //return creeps[0];
       //var location = toMapUnits(center);
       var nearestCreep = undefined;
       //var r = toMapUnits({x:radius,y:radius});
       for(var i = 0; i< creeps.length; i++){
-        var oldDist = 100000;
-        if(nearestCreep!==undefined){
-          oldDist = dist2(center,nearestCreep.center);
-        }
-        var newDist = dist2(center,creeps[i].center);
-        if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
-          nearestCreep = creeps[i];
+        if (typesMatch(creeps[i], type)) {
+          var oldDist = 100000;
+          if(nearestCreep!==undefined){
+            oldDist = dist2(center,nearestCreep.center);
+          }
+          var newDist = dist2(center,creeps[i].center);
+          if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
+            nearestCreep = creeps[i];
+          }
         }
       }
       
@@ -959,6 +976,10 @@ DTD.components = (function(graphics) {
       return nearestCreep;
     }
     
+    function typesMatch(creep, type) {
+      return creep.type === type || type === Constants.MixedType;
+    }
+    
     function checkCollisions(projectile){
       // var location = toMapUnits(projectile.center);
       // for(var i = location.i-1; i<= location.i+1; i++ ){
@@ -969,14 +990,14 @@ DTD.components = (function(graphics) {
 
       for(var i = 0; i< creeps.length; i++ ){
         var hit = intersectCirclePoint(creeps[i], projectile);
-        if(hit){
+        if(hit && typesMatch(creeps[i], projectile.type)){
           creeps[i].hit(projectile.damage);
           if (projectile.freezePower !== undefined) {
             creeps[i].slow(projectile.freezePower);
           }
           if (projectile.damageRadius !== undefined) {
             for(var j = 0; j < creeps.length; j++) {
-              if (intersectCircles(creeps[j], projectile) && i !== j) {
+              if (intersectCircles(creeps[j], projectile) && typesMatch(creeps[j], projectile.type) && i !== j) {
                 creeps[j].hit(projectile.damage);
               }
             }
@@ -1066,20 +1087,20 @@ DTD.components = (function(graphics) {
     
     return that;
   }
-
-  function Tower_Slowing(){
+  
+  function Tower_Projectile(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-1-1.png',
+      image: 'images/tower-defense-turrets/turret-2-1.png',
       baseColor: 'rgba(79,6,39,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:550,
+      radius: 50,
       rotateSpeed: Math.PI / 4,
       reloadTime: 0.5,
-      fill: 'blue',
-      freezePower: 0.5,
-      projectileSpeed: 75,
-      damage: 2
+      fill: 'black',
+      projectileSpeed: 100,
+      damage: 10,
+      type: Constants.MixedType
     };
     var that = Tower(spec);
     
@@ -1096,24 +1117,26 @@ DTD.components = (function(graphics) {
         },
         damage: spec.damage,
         fill: spec.fill,
-        freezePower: spec.freezePower
+        type: spec.type
       });
     }
     return that;
   }
-  
-  function Tower_Projectile(){
+
+  function Tower_Slowing(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-2-1.png',
-      baseColor: 'rgba(79,6,39,1)',
+      image: 'images/tower-defense-turrets/turret-1-1.png',
+      baseColor: 'rgba(3,216,226,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:550,
+      radius: 50,
       rotateSpeed: Math.PI / 4,
       reloadTime: 0.5,
-      fill: 'black',
-      projectileSpeed: 100,
-      damage: 10
+      fill: 'blue',
+      freezePower: 0.5,
+      projectileSpeed: 75,
+      damage: 2,
+      type: Constants.GroundType
     };
     var that = Tower(spec);
     
@@ -1128,45 +1151,12 @@ DTD.components = (function(graphics) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.projectileDamage,
-        fill: spec.fill
-      });
-    }
-    return that;
-  }
-  
-  function Tower_Missile(){
-    var spec = {
-      image: 'images/tower-defense-turrets/turret-5-1.png',
-      baseColor: 'rgba(27,248,26,1)',
-      rotation: 3 * Math.PI / 2,
-      center:{x:0,y:0},
-      radius:540,
-      rotateSpeed: Math.PI / 4,
-      reloadTime: 1,
-      fill: 'green',
-      projectileSpeed: 75,
-      damage: 30
-    }
-    var that = Tower(spec);
-    
-    that.createProjectile = function() {
-      return GuidedProjectile({
-        center: {
-          x: spec.center.x,
-          y: spec.center.y
-        },
-        speed: spec.projectileSpeed,
-        direction: {
-          x: Math.cos(spec.rotation),
-          y: Math.sin(spec.rotation)
-        },
-        damage: spec.projectileDamage,
+        damage: spec.damage,
         fill: spec.fill,
-        targetCreep: spec.targetCreep
+        freezePower: spec.freezePower,
+        type: spec.type
       });
     }
-    
     return that;
   }
   
@@ -1176,13 +1166,14 @@ DTD.components = (function(graphics) {
       baseColor: 'rgba(255,84,0,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:580,
+      radius: 80,
       rotateSpeed: Math.PI / 4,
       reloadTime: 1.5,
       damageRadius: 20,
       fill: 'red',
       projectileSpeed: 50,
-      damage: 40
+      damage: 40,
+      type: Constants.GroundType
     };
     var that = Tower(spec);
         
@@ -1197,9 +1188,47 @@ DTD.components = (function(graphics) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.projectileDamage,
+        damage: spec.damage,
         fill: spec.fill,
-        damageRadius: spec.damageRadius
+        damageRadius: spec.damageRadius,
+        type: spec.type
+      });
+    }
+    
+    return that;
+  }
+  
+  function Tower_Missile(){
+    var spec = {
+      image: 'images/tower-defense-turrets/turret-5-1.png',
+      baseColor: 'rgba(27,248,26,1)',
+      rotation: 3 * Math.PI / 2,
+      center:{x:0,y:0},
+      radius: 40,
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 1,
+      fill: 'green',
+      projectileSpeed: 75,
+      damage: 30,
+      type: Constants.AirType
+    }
+    var that = Tower(spec);
+    
+    that.createProjectile = function() {
+      return GuidedProjectile({
+        center: {
+          x: spec.center.x,
+          y: spec.center.y
+        },
+        speed: spec.projectileSpeed,
+        direction: {
+          x: Math.cos(spec.rotation),
+          y: Math.sin(spec.rotation)
+        },
+        damage: spec.damage,
+        fill: spec.fill,
+        targetCreep: spec.targetCreep,
+        type: spec.type
       });
     }
     
@@ -1218,7 +1247,8 @@ DTD.components = (function(graphics) {
       exitNumber: spec.exitNumber,
       speed: 40,
       spriteCount: 6,
-      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ]
+      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
   
@@ -1234,7 +1264,8 @@ DTD.components = (function(graphics) {
       exitNumber: spec.exitNumber,
       speed: 50,
       spriteCount: 4,
-      spriteTime: [ 200, 1000, 200, 600 ]
+      spriteTime: [ 200, 1000, 200, 600 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
   
@@ -1250,7 +1281,8 @@ DTD.components = (function(graphics) {
       exitNumber: spec.exitNumber,
       speed: 60,
       spriteCount: 4,
-      spriteTime: [ 1000, 200, 200, 200 ]
+      spriteTime: [ 1000, 200, 200, 200 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
 

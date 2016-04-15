@@ -65,7 +65,7 @@ DTD.graphics = (function() {
 		context.rotate(spec.rotation);
 		context.translate(-spec.center.x, -spec.center.y);
 		
-        context.globalAlpha = spec.opacity;
+		context.globalAlpha = spec.opacity;
 		context.drawImage(
 			spec.image,
 			spec.center.x - spec.width/2, 
@@ -187,9 +187,12 @@ DTD.graphics = (function() {
   function Texture(spec) {
       var that = {};
       spec.image = AssetManager.getImage(spec.image);
+			if (spec.opacity === undefined) {
+				spec.opacity = 1;
+			}
       
       that.draw = function() {
-        drawImage(spec);
+				drawImage(spec);
       };
       
       return that;
