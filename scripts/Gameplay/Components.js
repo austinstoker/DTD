@@ -318,14 +318,14 @@ DTD.components = (function(graphics,particles) {
         get damageRadius() { return spec.damageRadius; },
         get type() { return spec.type; }
       },
-        checkCollisionsFunction,
         timeSincePuff = 0,
         puffSpacing = spec.puffSpace | 100;
         
       that.didHit = false;
+      spec.checkCollisionsFunction = undefined;
       
       that.setCheckCollisionsFunction = function(f) {
-        that.checkCollisionsFunction = f;
+        spec.checkCollisionsFunction = f;
       }
       
       that.update = function(elapsedTime) {
@@ -337,8 +337,8 @@ DTD.components = (function(graphics,particles) {
           timeSincePuff=0;
           particles.smokePuff({center:spec.center});
         }
-        if (checkCollisionsFunction !== undefined) {
-          checkCollisionsFunction(that);
+        if (spec.checkCollisionsFunction !== undefined) {
+          spec.checkCollisionsFunction(that);
         }
       }
       
@@ -380,8 +380,8 @@ DTD.components = (function(graphics,particles) {
         }
         spec.center.x += direction.x * spec.speed * (elapsedTime / 1000);
         spec.center.y += direction.y * spec.speed * (elapsedTime / 1000);
-        if (that.checkCollisionsFunction !== undefined) {
-          that.checkCollisionsFunction(that);
+        if (spec.checkCollisionsFunction !== undefined) {
+          spec.checkCollisionsFunction(that);
         }
       }
       
