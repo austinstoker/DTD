@@ -18,14 +18,14 @@ DTD.particles =  (function(graphics) {
 	//
 	//------------------------------------------------------------------
 	that.createCircleEffect = function(inVal) {
-    var num = inVal.num ||10;
+    var num = inVal.num;
     var rad = inVal.rad;
     var size = inVal.size;
 
 		for(var i=0; i<num; i++){
         var pos = {x:Random.nextGaussian(inVal.center.x,rad/2),y:Random.nextGaussian(inVal.center.y,rad/2)};
 				var dir = {x:Random.nextGaussian(0,2),y:Random.nextGaussian(0,2)};
-				var p = {
+				var p = SquareParticle({
 						fill: inVal.color,
 						stroke: inVal.color,
 						width: size,
@@ -37,7 +37,7 @@ DTD.particles =  (function(graphics) {
 						rotation: Random.nextGaussian(4, 1),
 						lifetime: Random.nextGaussian(inVal.baseLife, inVal.baseLife/3),	// How long the particle should live, in seconds
 						alive: 0	// How long the particle has been alive, in seconds
-					};
+					});
 				//
 				// Assign a unique name to each particle
 				particles[nextName++] = p;
@@ -56,7 +56,7 @@ DTD.particles =  (function(graphics) {
         pos.x = pos.x+rad*cir.x;
         pos.y = pos.y+rad*cir.y;
 				var dir = {x:Random.nextGaussian(0,2),y:Random.nextGaussian(0,2)};
-				var p = {
+				var p = SquareParticle({
 						fill: inVal.color,
 						stroke: inVal.color,
 						width: size,
@@ -68,7 +68,7 @@ DTD.particles =  (function(graphics) {
 						rotation: Random.nextGaussian(4, 1),
 						lifetime: Random.nextGaussian(inVal.baseLife, inVal.baseLife/3),	// How long the particle should live, in seconds
 						alive: 0	// How long the particle has been alive, in seconds
-					};
+					});
 				//
 				// Assign a unique name to each particle
 				particles[nextName++] = p;
@@ -130,7 +130,22 @@ DTD.particles =  (function(graphics) {
   }
   
   that.createFloatingNumberEffect = function(inVal){
-      
+    var p = TextParticle({
+        fill: 'green',
+        stroke: 'white',
+        font:"20px Arial",
+        text:inVal.text,
+        gravity: .3,
+        position: inVal.position,
+        direction: {x:0,y:-1},
+        speed: 20,
+        rotation:0,
+        lifetime: 1,	// How long the particle should live, in seconds
+        alive: 0	// How long the particle has been alive, in seconds
+      });
+    //
+    // Assign a unique name to each particle
+    particles[nextName++] = p;
   }
   
 	
@@ -149,27 +164,13 @@ DTD.particles =  (function(graphics) {
 		
 		Object.getOwnPropertyNames(particles).forEach(function(value, index, array) {
 			particle = particles[value];
-			//
-			// Update how long it has been alive
-			particle.alive += elapsedTime;
-			
-			//
-			// Update its position
-			particle.position.x += (elapsedTime * particle.speed * particle.direction.x);
-			particle.position.y += (elapsedTime * particle.speed * particle.direction.y)+particle.alive*particle.alive*particle.gravity;
-			
-			//
-			// Rotate proportional to its speed
-			particle.rotation += particle.speed / 500;
-			
-			//
+      particle.update(elapsedTime);
 			// If the lifetime has expired, identify it for removal
-			if (particle.alive > particle.lifetime) {
+			if (particle.isDead()) {
 				removeMe.push(value);
 			}
 		});
-		
-		//
+    
 		// Remove all of the expired particles
 		for (particle = 0; particle < removeMe.length; particle++) {
 			delete particles[removeMe[particle]];
@@ -177,6 +178,68 @@ DTD.particles =  (function(graphics) {
 		removeMe.length = 0;
 	};
 	
+  function SquareParticle(spec){
+    var that = {};
+    that.render = function(){
+    graphics.drawRectangle({
+        x:spec.position.x,
+        y:spec.position.y,
+        width:spec.width,
+        height:spec.height,
+        fill:spec.fill,
+        stroke:spec.stroke
+      });
+    }
+    that.update = function(elapsedTime){
+    	// Update how long it has been alive
+			spec.alive += elapsedTime;
+			
+			//
+			// Update its position
+			spec.position.x += (elapsedTime * spec.speed * spec.direction.x);
+			spec.position.y += (elapsedTime * spec.speed * spec.direction.y)+spec.alive*spec.alive*spec.gravity;
+			
+			//
+			// Rotate proportional to its speed
+			spec.rotation += spec.speed / 500;
+    }
+    that.isDead = function(){
+      return spec.alive > spec.lifetime;
+    }
+    
+  return that;
+  }
+  
+    function TextParticle(spec){
+    var that = {};
+    that.render = function(){
+    graphics.drawText({
+        position:spec.position,
+        font:spec.font,
+        text:spec.text,
+        fill:spec.fill,
+        stroke:spec.stroke
+      });
+    }
+    that.update = function(elapsedTime){
+    	// Update how long it has been alive
+			spec.alive += elapsedTime;
+			
+			//
+			// Update its position
+			spec.position.x += (elapsedTime * spec.speed * spec.direction.x);
+			spec.position.y += (elapsedTime * spec.speed * spec.direction.y)+spec.alive*spec.alive*spec.gravity;
+			
+			//
+			// Rotate proportional to its speed
+			spec.rotation += spec.speed / 500;
+    }
+    that.isDead = function(){
+      return spec.alive > spec.lifetime;
+    }
+    
+  return that;
+  }
 	//------------------------------------------------------------------
 	//
 	// Render all particles
@@ -185,14 +248,8 @@ DTD.particles =  (function(graphics) {
 	that.render = function() {
 		Object.getOwnPropertyNames(particles).forEach( function(value, index, array) {
 			var particle = particles[value];
-			graphics.drawRectangle({
-        x:particle.position.x,
-        y:particle.position.y,
-        width:particle.width,
-        height:particle.height,
-        fill:particle.fill,
-        stroke:particle.stroke
-      });
+      particle.render();
+			
 		});
 	};
 	

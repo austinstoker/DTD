@@ -881,6 +881,10 @@ DTD.components = (function(graphics,particles) {
           particles.creepDeath({
             center: creeps[i].center
           });
+          particles.createFloatingNumberEffect({
+            position:creeps[i].center,
+            text:'+5'
+          })
           toRemove.push(i);
         }
         creeps[i].update(elapsedTime);
