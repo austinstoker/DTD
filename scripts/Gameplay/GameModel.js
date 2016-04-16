@@ -39,8 +39,8 @@ DTD.model = (function(components, graphics, input, particles) {
 
     function render() {
         map.render();
-        toolBox.render();
         particles.render();
+        toolBox.render();
     }
 
     function gameLoop(elapsedTime) {

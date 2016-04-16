@@ -17,30 +17,22 @@ DTD.particles =  (function(graphics) {
 	// This creates one new box of particles
 	//
 	//------------------------------------------------------------------
-	that.createBoxEffect = function(inVal) {
-    var xdiv = inVal.div ||10;
-    var ydiv = 10;
-    var dim = inVal.dim;
-		var dx = dim/xdiv,
-		  dy = dim/ydiv,
-		  xpos = inVal.center.x-dim/2,
-		  ypos = inVal.center.y-dim/2,
-		  dir = {x: xpos - inVal.center.x, y: ypos-inVal.center.y}
+	that.createCircleEffect = function(inVal) {
+    var num = inVal.num ||10;
+    var rad = inVal.rad;
+    var size = inVal.size;
 
-		for(var i=0; i<xdiv; i++){
-			xpos += dx;
-			ypos = inVal.center.y-dim/2;
-			for(var j=0; j<ydiv; j++){
-				ypos += dy;
-				dir = {x: (xpos - inVal.center.x), y: (ypos-inVal.center.y)};
+		for(var i=0; i<num; i++){
+        var pos = {x:Random.nextGaussian(inVal.center.x,rad/2),y:Random.nextGaussian(inVal.center.y,rad/2)};
+				var dir = {x:Random.nextGaussian(0,2),y:Random.nextGaussian(0,2)};
 				var p = {
 						fill: inVal.color,
 						stroke: inVal.color,
-						width: dx,
-						height: dx,
+						width: size,
+						height: size,
             gravity: 0,
-						position: {x: xpos, y: ypos},
-						direction: {x:Random.nextGaussian(0, 3),y:Random.nextGaussian(0, 3)},
+						position: pos,
+						direction: dir,
 						speed: Random.nextGaussian(inVal.baseSpeed, inVal.baseSpeed/4), // pixels per second
 						rotation: Random.nextGaussian(4, 1),
 						lifetime: Random.nextGaussian(inVal.baseLife, inVal.baseLife/3),	// How long the particle should live, in seconds
@@ -50,18 +42,75 @@ DTD.particles =  (function(graphics) {
 				// Assign a unique name to each particle
 				particles[nextName++] = p;
 			}
-		}
 	};
+  
+  that.createRingEffect = function(inVal) {
+    var num = inVal.num ||10;
+    var rad = inVal.rad;
+    var ringWidth = inVal.ringWidth;
+    var size = inVal.size;
+
+		for(var i=0; i<num; i++){
+        var pos = {x:Random.nextGaussian(inVal.center.x,ringWidth/2),y:Random.nextGaussian(inVal.center.y,ringWidth/2)};
+        var cir = Random.nextCircleVector()
+        pos.x = pos.x+rad*cir.x;
+        pos.y = pos.y+rad*cir.y;
+				var dir = {x:Random.nextGaussian(0,2),y:Random.nextGaussian(0,2)};
+				var p = {
+						fill: inVal.color,
+						stroke: inVal.color,
+						width: size,
+						height: size,
+            gravity: 0,
+						position: pos,
+						direction: dir,
+						speed: Random.nextGaussian(inVal.baseSpeed, inVal.baseSpeed/4), // pixels per second
+						rotation: Random.nextGaussian(4, 1),
+						lifetime: Random.nextGaussian(inVal.baseLife, inVal.baseLife/3),	// How long the particle should live, in seconds
+						alive: 0	// How long the particle has been alive, in seconds
+					};
+				//
+				// Assign a unique name to each particle
+				particles[nextName++] = p;
+			}
+	};
+  
   
   that.explosion = function(inVal) {
     
   }
   
-  that.smokePuff = function(inVal) {
-    that.createBoxEffect({
+  that.darkPuff = function(inVal) {
+    that.createCircleEffect({
       center:inVal.center,
-      div: 5,
-      dim:.1,
+      num: 80,
+      rad:5,
+      size:.9,
+      color:'black',
+      baseSpeed:2,
+      baseLife:.5,
+    });
+  }
+  
+  that.grayPuff = function(inVal) {
+    that.createRingEffect({
+      center:inVal.center,
+      num: inVal.dim*inVal.dim/10,
+      rad:inVal.dim,
+      ringWidth:7,
+      size:.5,
+      color:'white',
+      baseSpeed:1,
+      baseLife:1,
+    });
+  }
+  
+  that.smokePuff = function(inVal) {
+    that.createCircleEffect({
+      center:inVal.center,
+      num: 20,
+      rad:0,
+      size:.3,
       color:'white',
       baseSpeed:1,
       baseLife:.7,
@@ -69,14 +118,21 @@ DTD.particles =  (function(graphics) {
   }
   
   that.creepDeath = function(inVal) {
-    that.createBoxEffect({
+    that.createCircleEffect({
       center:inVal.center,
-      dim:40,
+      num:200,
+      rad:15,
+      size:1,
       color:'green',
       baseSpeed: 4,
       baseLife: 1
     });
   }
+  
+  that.createFloatingNumberEffect = function(inVal){
+      
+  }
+  
 	
 	//------------------------------------------------------------------
 	//
