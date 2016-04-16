@@ -67,6 +67,9 @@ DTD.components = (function(graphics,particles) {
     get CreepWidth() { return 40; },
     get TowerHeight() { return 40; },
     get TowerWidth() { return 40; },
+    get GroundType() { return 'ground'; },
+    get AirType() { return 'air'; },
+    get MixedType() { return 'mixed'; }
   };
 
   // ------------------------------------------------------------------
@@ -91,7 +94,8 @@ DTD.components = (function(graphics,particles) {
         set validPosition(value) { validPosition = value},
         get validPosition() { return validPosition;},
         set highlight(value) {highlight = value;},
-        get highlight() {return highlight;}
+        get highlight() {return highlight;},
+        get type() { return spec.type; }
       },
         projectiles = [],
         highlight = false,
@@ -100,14 +104,22 @@ DTD.components = (function(graphics,particles) {
         rotateSpeed = spec.rotateSpeed,
         validPosition = true,
         reloadTimeRemaining = 0,
-        targetCreep,
         nearestCreepFunction,
         projectileCollisionFunction;
+        // base = graphics.Texture({
+        //   image: 'images/tower-defense-turrets/turret-base.gif',
+        //   width: Constants.TowerWidth,
+        //   height: Constants.TowerHeight,
+        //   center: spec.center,
+        //   rotation: 0,
+        //   test: true
+        // });
         
-        that.placed = false;
-        spec.width = Constants.TowerWidth;
-        spec.height = Constants.TowerHeight;
-        spec.opacity = 0.4;
+      that.placed = false;
+      spec.width = Constants.TowerWidth;
+      spec.height = Constants.TowerHeight;
+      spec.opacity = 0.4;
+      spec.targetCreep = undefined;
         
         that.setNearestCreepFunction = function(f) {
           nearestCreepFunction = f;
@@ -132,19 +144,19 @@ DTD.components = (function(graphics,particles) {
           if (reloadTimeRemaining < 0) {
             reloadTimeRemaining = 0;
           }
-          if (targetCreep !== undefined && spec.rotation === targetRotation && reloadTimeRemaining === 0) {
+          if (spec.targetCreep !== undefined && spec.rotation === targetRotation && reloadTimeRemaining === 0) {
             fire();
           }
           updateProjectiles(elapsedTime);
         }
         
         function updateTarget() {
-          if (!intersectCircles(that, targetCreep) || !targetCreep.alive()) {
-            // if (!intersectCircleRect(that, targetCreep)) {
+          if (!intersectCircles(that, spec.targetCreep) || !spec.targetCreep.alive()) {
+            // if (!intersectCircleRect(that, spec.targetCreep)) {
               if (nearestCreepFunction !== undefined) {
-                var target = nearestCreepFunction(spec.center, spec.radius);
-                if (targetCreep !== target) {
-                  targetCreep = target;
+                var target = nearestCreepFunction(spec.center, spec.radius, spec.type);
+                if (spec.targetCreep !== target) {
+                  spec.targetCreep = target;
                 }
               }
           //   }
@@ -153,10 +165,10 @@ DTD.components = (function(graphics,particles) {
         }
         
         function updateTargetRotation() {
-          if (targetCreep === undefined) {
+          if (spec.targetCreep === undefined) {
             targetRotation = spec.rotation;
           } else {
-            var targetPosition = targetCreep.center,
+            var targetPosition = spec.targetCreep.center,
               direction = {
                 x: targetPosition.x - spec.center.x,
                 y: targetPosition.y - spec.center.y
@@ -200,23 +212,14 @@ DTD.components = (function(graphics,particles) {
         }
 
         function fire() {
-          var proj = Projectile({
-            center: {
-              x: spec.center.x,
-              y: spec.center.y
-            },
-            speed: 50,
-            direction: {
-              x: Math.cos(spec.rotation),
-              y: Math.sin(spec.rotation)
-            },
-            damage: 7,
-            freezePower: .5,
-          });
+          var proj = that.createProjectile();
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
           projectiles.push(proj);
           reloadTimeRemaining = spec.reloadTime * 1000;
         }
+        
+        // template method--must be overridden
+        that.createProjectile = function() {}
 
         function renderPlacing() {
           var squareFill;
@@ -260,6 +263,7 @@ DTD.components = (function(graphics,particles) {
             fill: f,
             opacity: 0.4
           });
+          // base.draw();
           for (var i = 0; i < projectiles.length; i++) {
             projectiles[i].render();
           }
@@ -307,18 +311,21 @@ DTD.components = (function(graphics,particles) {
       var that = {
         get center() { return spec.center },
         get damage() { return spec.damage },
-        get freezePower() {return spec.freezePower },
-        get x() { return spec.center.x },
-        get y() { return spec.center.y }
+        get x() { return spec.center.x; },
+        get y() { return spec.center.y; },
+        get radius() { return spec.damageRadius; },
+        get freezePower() { return spec.freezePower; },
+        get damageRadius() { return spec.damageRadius; },
+        get type() { return spec.type; }
       },
-        checkCollisionsFunction,
         timeSincePuff = 0,
         puffSpacing = spec.puffSpace | 100;
         
       that.didHit = false;
+      spec.checkCollisionsFunction = undefined;
       
       that.setCheckCollisionsFunction = function(f) {
-        checkCollisionsFunction = f;
+        spec.checkCollisionsFunction = f;
       }
       
       that.update = function(elapsedTime) {
@@ -330,8 +337,8 @@ DTD.components = (function(graphics,particles) {
           timeSincePuff=0;
           particles.smokePuff({center:spec.center});
         }
-        if (checkCollisionsFunction !== undefined) {
-          checkCollisionsFunction(that);
+        if (spec.checkCollisionsFunction !== undefined) {
+          spec.checkCollisionsFunction(that);
         }
       }
       
@@ -340,12 +347,42 @@ DTD.components = (function(graphics,particles) {
           x: spec.center.x,
           y: spec.center.y,
           radius: 3,
-          fill: 'black'
+          fill: spec.fill
         })
       }
       
       that.hit = function() {
         that.didHit = true;
+      }
+      
+      return that;
+    }
+    
+    function GuidedProjectile(spec) {
+      var that = Projectile(spec),
+        direction = {
+          x: 0,
+          y: 0
+        };
+      calculateDirection();
+      
+      function calculateDirection() {
+        direction.x = spec.targetCreep.center.x - spec.center.x;
+        direction.y = spec.targetCreep.center.y - spec.center.y;
+        var length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+        direction.x /= length;
+        direction.y /= length;
+      }
+      
+      that.update = function(elapsedTime) {
+        if (spec.targetCreep.alive()) {
+          calculateDirection();
+        }
+        spec.center.x += direction.x * spec.speed * (elapsedTime / 1000);
+        spec.center.y += direction.y * spec.speed * (elapsedTime / 1000);
+        if (spec.checkCollisionsFunction !== undefined) {
+          spec.checkCollisionsFunction(that);
+        }
       }
       
       return that;
@@ -379,6 +416,7 @@ DTD.components = (function(graphics,particles) {
         get rotation() { return spec.rotation },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
+        get type() { return spec.type; },
         get radius() { return Math.min(spec.width, spec.height)/2; } // A tight radius, for a circle inscribed in the creep
       },
       sprite = graphics.SpriteSheet(spec),
@@ -396,8 +434,9 @@ DTD.components = (function(graphics,particles) {
       }
       
       that.slow = function(slowBy) {
-        if(spec.speed<slowBy){return}
-        spec.speed -= slowBy;
+        if(spec.speed > slowBy) {
+          spec.speed -= slowBy;
+        }
       }
       
       
@@ -415,10 +454,6 @@ DTD.components = (function(graphics,particles) {
       
       that.update = function(elapsedTime) {
         var nextPoint, direction;
-        // This is only to demonstrate life point functionality and should be removed
-        if (elapsedTime > 100) {
-          that.hit(1);
-        }
 
         if (elapsedTime < 0 || !that.alive()) {
           return;
@@ -604,7 +639,7 @@ DTD.components = (function(graphics,particles) {
         var hit = intersectRectangles(projectile,creeps[i]);
         if(hit){
           creeps[i].hit(projectile.damage);
-          creeps[i].slow(projectile.freezePower);
+            creeps[i].slow(projectile.freezePower);
           projectile.hit();
           break;
         }
@@ -812,7 +847,7 @@ DTD.components = (function(graphics,particles) {
       // this should be replaced with something better when levels are implemented
       sumTime+=elapsedTime;
       if(sumTime>=2000){
-        sumTime = 0;
+        sumTime = -200000;
         addCreep(Creep_1({exitNumber:0}));
         addCreep(Creep_2({exitNumber:1}));
         addCreep(Creep_3({exitNumber:2})); //air
@@ -838,7 +873,6 @@ DTD.components = (function(graphics,particles) {
       }
       for(var i = toRemove.length-1; i>=0;i--){
         creeps.splice(toRemove[i],1);
-        console.log(creeps.length);
       }
     }
     
@@ -920,19 +954,21 @@ DTD.components = (function(graphics,particles) {
       return dest;
     }
     
-    function getNearestCreep(center,radius){
+    function getNearestCreep(center, radius, type) {
       //return creeps[0];
       //var location = toMapUnits(center);
       var nearestCreep = undefined;
       //var r = toMapUnits({x:radius,y:radius});
       for(var i = 0; i< creeps.length; i++){
-        var oldDist = 100000;
-        if(nearestCreep!==undefined){
-          oldDist = dist2(center,nearestCreep.center);
-        }
-        var newDist = dist2(center,creeps[i].center);
-        if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
-          nearestCreep = creeps[i];
+        if (typesMatch(creeps[i], type)) {
+          var oldDist = 100000;
+          if(nearestCreep!==undefined){
+            oldDist = dist2(center,nearestCreep.center);
+          }
+          var newDist = dist2(center,creeps[i].center);
+          if(newDist < Math.pow(radius+Constants.CreepWidth,2) && newDist<oldDist){
+            nearestCreep = creeps[i];
+          }
         }
       }
       
@@ -952,6 +988,10 @@ DTD.components = (function(graphics,particles) {
       return nearestCreep;
     }
     
+    function typesMatch(creep, type) {
+      return creep.type === type || type === Constants.MixedType;
+    }
+    
     function checkCollisions(projectile){
       // var location = toMapUnits(projectile.center);
       // for(var i = location.i-1; i<= location.i+1; i++ ){
@@ -961,11 +1001,21 @@ DTD.components = (function(graphics,particles) {
       // }
 
       for(var i = 0; i< creeps.length; i++ ){
-        var hit = intersectPoint(creeps[i], projectile);
-        if(hit){
+        var hit = intersectCirclePoint(creeps[i], projectile);
+        if(hit && typesMatch(creeps[i], projectile.type)){
           creeps[i].hit(projectile.damage);
-          creeps[i].slow(projectile.freezePower);
+          if (projectile.freezePower !== undefined) {
+            creeps[i].slow(projectile.freezePower);
+          }
+          if (projectile.damageRadius !== undefined) {
+            for(var j = 0; j < creeps.length; j++) {
+              if (intersectCircles(creeps[j], projectile) && typesMatch(creeps[j], projectile.type) && i !== j) {
+                creeps[j].hit(projectile.damage);
+              }
+            }
+          } 
           projectile.hit();
+          break;
         }
       }
     }
@@ -1049,79 +1099,151 @@ DTD.components = (function(graphics,particles) {
     
     return that;
   }
-
-  function Tower_1(){
-    var that = Tower({
-      image: 'images/tower-defense-turrets/turret-1-1.png',
-      baseColor: 'red',
-      rotation: 3 * Math.PI / 2,
-      center:{x:0,y:0},
-      radius:50,
-      rotateSpeed: Math.PI / 4,
-      reloadTime: 0.25
-    });
-    return that;
-  }
   
-  function Tower_2(){
-    var that = Tower({
+  function Tower_Projectile(){
+    var spec = {
       image: 'images/tower-defense-turrets/turret-2-1.png',
-      baseColor: 'orange',
+      baseColor: 'rgba(79,6,39,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:50,
+      radius: 50,
       rotateSpeed: Math.PI / 4,
-      reloadTime: 0.5
-    });
+      reloadTime: 0.5,
+      fill: 'black',
+      projectileSpeed: 100,
+      damage: 10,
+      type: Constants.MixedType
+    };
+    var that = Tower(spec);
+    
+    that.createProjectile = function() {
+      return Projectile({
+        center: {
+          x: spec.center.x,
+          y: spec.center.y
+        },
+        speed: spec.projectileSpeed,
+        direction: {
+          x: Math.cos(spec.rotation),
+          y: Math.sin(spec.rotation)
+        },
+        damage: spec.damage,
+        fill: spec.fill,
+        type: spec.type
+      });
+    }
+    return that;
+  }
+
+  function Tower_Slowing(){
+    var spec = {
+      image: 'images/tower-defense-turrets/turret-1-1.png',
+      baseColor: 'rgba(3,216,226,1)',
+      rotation: 3 * Math.PI / 2,
+      center:{x:0,y:0},
+      radius: 50,
+      rotateSpeed: Math.PI / 4,
+      reloadTime: 0.5,
+      fill: 'blue',
+      freezePower: 0.5,
+      projectileSpeed: 75,
+      damage: 2,
+      type: Constants.GroundType
+    };
+    var that = Tower(spec);
+    
+    that.createProjectile = function() {
+      return Projectile({
+        center: {
+          x: spec.center.x,
+          y: spec.center.y
+        },
+        speed: spec.projectileSpeed,
+        direction: {
+          x: Math.cos(spec.rotation),
+          y: Math.sin(spec.rotation)
+        },
+        damage: spec.damage,
+        fill: spec.fill,
+        freezePower: spec.freezePower,
+        type: spec.type
+      });
+    }
     return that;
   }
   
-  function Tower_3(){
-    var that = Tower({
-      image: 'images/tower-defense-turrets/turret-3-1.png',
-      baseColor: 'yellow',
+  function Tower_Bomb(){
+    var spec = {
+      image: 'images/tower-defense-turrets/turret-7-1.png',
+      baseColor: 'rgba(255,84,0,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:100,
+      radius: 80,
       rotateSpeed: Math.PI / 4,
-      reloadTime: 1
-    });
+      reloadTime: 1.5,
+      damageRadius: 20,
+      fill: 'red',
+      projectileSpeed: 50,
+      damage: 40,
+      type: Constants.GroundType
+    };
+    var that = Tower(spec);
+        
+    that.createProjectile = function() {
+      return Projectile({
+        center: {
+          x: spec.center.x,
+          y: spec.center.y
+        },
+        speed: spec.projectileSpeed,
+        direction: {
+          x: Math.cos(spec.rotation),
+          y: Math.sin(spec.rotation)
+        },
+        damage: spec.damage,
+        fill: spec.fill,
+        damageRadius: spec.damageRadius,
+        type: spec.type
+      });
+    }
+    
     return that;
   }
-  function Tower_4(){
-    var that = Tower({
-      image: 'images/tower-defense-turrets/turret-4-1.png',
-      baseColor: 'green',
-      rotation: 3 * Math.PI / 2,
-      center:{x:0,y:0},
-      radius:30,
-      rotateSpeed: Math.PI / 4,
-      reloadTime: 1.5
-    });
-    return that;
-  }
-  function Tower_5(){
-    var that = Tower({
+  
+  function Tower_Missile(){
+    var spec = {
       image: 'images/tower-defense-turrets/turret-5-1.png',
-      baseColor: 'blue',
+      baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius:40,
+      radius: 40,
       rotateSpeed: Math.PI / 4,
-      reloadTime: 1.5
-    });
-    return that;
-  }
-  function Tower_6(){
-    var that = Tower({
-      image: 'images/tower-defense-turrets/turret-6-1.png',
-      baseColor: 'purple',
-      rotation: 3 * Math.PI / 2,
-      center:{x:0,y:0},
-      radius:80,
-      rotateSpeed: Math.PI / 4,
-      reloadTime: 2
-    });
+      reloadTime: 1,
+      fill: 'green',
+      projectileSpeed: 75,
+      damage: 30,
+      type: Constants.AirType
+    }
+    var that = Tower(spec);
+    
+    that.createProjectile = function() {
+      return GuidedProjectile({
+        center: {
+          x: spec.center.x,
+          y: spec.center.y
+        },
+        speed: spec.projectileSpeed,
+        direction: {
+          x: Math.cos(spec.rotation),
+          y: Math.sin(spec.rotation)
+        },
+        damage: spec.damage,
+        fill: spec.fill,
+        targetCreep: spec.targetCreep,
+        type: spec.type
+      });
+    }
+    
     return that;
   }
   
@@ -1137,7 +1259,8 @@ DTD.components = (function(graphics,particles) {
       exitNumber: spec.exitNumber,
       speed: 40,
       spriteCount: 6,
-      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ]
+      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
   
@@ -1153,7 +1276,8 @@ DTD.components = (function(graphics,particles) {
       exitNumber: spec.exitNumber,
       speed: 50,
       spriteCount: 4,
-      spriteTime: [ 200, 1000, 200, 600 ]
+      spriteTime: [ 200, 1000, 200, 600 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
   
@@ -1169,19 +1293,18 @@ DTD.components = (function(graphics,particles) {
       exitNumber: spec.exitNumber,
       speed: 60,
       spriteCount: 4,
-      spriteTime: [ 1000, 200, 200, 200 ]
+      spriteTime: [ 1000, 200, 200, 200 ],
+      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
     });
   }
 
 
   return {
     Tower : Tower,
-    Tower_1 : Tower_1,
-    Tower_2 : Tower_2,
-    Tower_3 : Tower_3,
-    Tower_4 : Tower_4,
-    Tower_5 : Tower_5,
-    Tower_6 : Tower_6,
+    Tower_Slowing : Tower_Slowing,
+    Tower_Projectile : Tower_Projectile,
+    Tower_Missile : Tower_Missile,
+    Tower_Bomb : Tower_Bomb,
     Creep_1 : Creep_1,
     Creep_2 : Creep_2,
     Creep_3 : Creep_3,

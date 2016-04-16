@@ -21,16 +21,15 @@ DTD.model = (function(components, graphics, input, particles) {
     AssetManager.loadImage('images/tower-defense-turrets/turret-7-1.png');
     AssetManager.loadImage('images/tower-defense-turrets/turret-7-2.png');
     AssetManager.loadImage('images/tower-defense-turrets/turret-7-3.png');
+    AssetManager.loadImage('images/tower-defense-turrets/turret-base.gif');
     AssetManager.loadImage('images/creep/creep-1-blue/spriteSheet.png');
     AssetManager.loadImage('images/creep/creep-2-green/spriteSheet.png');
     AssetManager.loadImage('images/creep/creep-3-red/spriteSheet.png');
     
-    toolBox.addComponent(components.Tower_1);
-    toolBox.addComponent(components.Tower_2);
-    toolBox.addComponent(components.Tower_3);
-    toolBox.addComponent(components.Tower_4);
-    toolBox.addComponent(components.Tower_5);
-    toolBox.addComponent(components.Tower_6);
+    toolBox.addComponent(components.Tower_Projectile);
+    toolBox.addComponent(components.Tower_Slowing);
+    toolBox.addComponent(components.Tower_Bomb);
+    toolBox.addComponent(components.Tower_Missile);
     
     function update(elapsedTime) {
       elapsedTime = Math.min(elapsedTime,200);
