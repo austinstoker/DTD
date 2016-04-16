@@ -138,7 +138,7 @@ DTD.particles =  (function(graphics) {
         gravity: .3,
         position: inVal.position,
         direction: {x:0,y:-1},
-        speed: 20,
+        speed: Random.nextGaussian(20,3),
         rotation:0,
         lifetime: 1,	// How long the particle should live, in seconds
         alive: 0	// How long the particle has been alive, in seconds

@@ -6,7 +6,7 @@
 /*global DTD, console, KeyEvent, requestAnimationFrame, performance */
 
 DTD.pages['page-game'] = (function(gameModel, screens, graphics, input) {
-	var keyboard = input.Keyboard(),
+	var keyboard = input.keyboard,
 		cancelNextRequest = false,
 		lastTimeStamp = performance.now();
 

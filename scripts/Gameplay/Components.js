@@ -98,6 +98,7 @@ DTD.components = (function(graphics,particles) {
         get type() { return spec.type; }
       },
         projectiles = [],
+        selected = false,
         highlight = false,
         texture = graphics.Texture(spec),
         targetRotation = spec.rotation,
@@ -295,15 +296,20 @@ DTD.components = (function(graphics,particles) {
           }
         }
         
+        that.isSelected = function(){
+          return selected;
+        }
         that.select = function() {
           if (that.placed) {
            that.render = renderSelected;
+           selected = true;
           }
         }
         
         that.unselect = function() {
           if (that.placed) {
             that.render = renderPlaced;
+            selected = false;
           }
         }
 
@@ -673,6 +679,10 @@ DTD.components = (function(graphics,particles) {
     var cells = [];
     var entrances = [];
     var sumTime=0;
+    var score=0;
+    var gold=100;
+    var lives=10;
+    
     
     function newTowerConstructor(){};
     function internalClickHandler(){};
@@ -857,6 +867,20 @@ DTD.components = (function(graphics,particles) {
       internalMoveHandler(pos);
     }
     
+    that.sellTower = function(){
+      for(var i = towers.length-1; i>=0; i--)
+      {
+        if(towers[i].isSelected()===true){
+          gold+=3;
+          particles.createFloatingNumberEffect({
+            position:towers[i].center,
+            text:'+5'
+          });
+          towers.splice(i,1);
+        }
+      }
+    }
+    
     that.update = function(elapsedTime){
       //TODO This is just an easy way to add creeps at a reasonable rate
       // this should be replaced with something better when levels are implemented
@@ -885,6 +909,8 @@ DTD.components = (function(graphics,particles) {
             position:creeps[i].center,
             text:'+5'
           })
+          score+=5;
+          gold+=5;
           toRemove.push(i);
         }
         creeps[i].update(elapsedTime);
