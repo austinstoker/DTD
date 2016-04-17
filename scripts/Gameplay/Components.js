@@ -434,6 +434,8 @@ DTD.components = (function(graphics,particles) {
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
         get type() { return spec.type; },
+        get value() {return spec.value; },
+        get escaped() {return spec.escaped || false;},
         get radius() { return Math.min(spec.width, spec.height)/2; } // A tight radius, for a circle inscribed in the creep
       },
       sprite = graphics.SpriteSheet(spec),
@@ -470,7 +472,7 @@ DTD.components = (function(graphics,particles) {
       }
       
       that.update = function(elapsedTime) {
-        var nextPoint, direction;
+
 
         if (elapsedTime < 0 || !that.alive()) {
           return;
@@ -483,7 +485,13 @@ DTD.components = (function(graphics,particles) {
       }
       
       function updateTargets() {
+        var nextPoint, direction;
         nextPoint = pathFunction(spec.exitNumber, spec.center);
+        var nextNextPoint = pathFunction(spec.exitNumber, nextPoint);
+        if(nextPoint.x===nextNextPoint.x&&nextPoint.y===nextNextPoint.y){
+          spec.escaped = true; 
+          spec.lifePoints = 0;
+        }
         if (nextPoint.x !== targetPosition.x || nextPoint.y !== targetPosition.y) {
           targetPosition = nextPoint;
           direction = {
@@ -938,19 +946,24 @@ DTD.components = (function(graphics,particles) {
       }
       for(var i = 0; i<creeps.length; i++)
       {
-        if(!creeps[i].alive())
+        if(creeps[i].escaped){
+          lives-=1;
+          toRemove.push(i);
+        }
+        if(!creeps[i].alive() && !creeps[i].escaped)
         {
           particles.creepDeath({
             center: creeps[i].center
           });
           particles.createFloatingNumberEffect({
             position:creeps[i].center,
-            text:'+5'
+            text:'+'+creeps[i].value
           })
-          score+=5;
-          cash+=5;
+          score+=creeps[i].value;
+          cash+=creeps[i].value;
           toRemove.push(i);
         }
+        
         creeps[i].update(elapsedTime);
         updateCreepCells(creeps[i]);
       }
@@ -1359,6 +1372,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 40,
+      value:3,
       exitNumber: spec.exitNumber,
       speed: 40,
       spriteCount: 6,
@@ -1376,6 +1390,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 35,
+      value:2,
       exitNumber: spec.exitNumber,
       speed: 50,
       spriteCount: 4,
@@ -1393,6 +1408,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 30,
+      value:1,
       exitNumber: spec.exitNumber,
       speed: 60,
       spriteCount: 4,
