@@ -628,8 +628,8 @@ DTD.components = (function(graphics,particles) {
         vjustify:'top'
       });
       graphics.drawText({
-        fill: 'blue',
-        stroke: 'blue',
+        fill: 'red',
+        stroke: 'red',
         font:'20px Arial',
         text:'Lives: '+spec.map.lives,
         position:{x:pos.x,y:pos.y+20},
@@ -948,6 +948,9 @@ DTD.components = (function(graphics,particles) {
       {
         if(creeps[i].escaped){
           lives-=1;
+          particles.creepEscape({
+            center: creeps[i].center
+          });
           toRemove.push(i);
         }
         if(!creeps[i].alive() && !creeps[i].escaped)
@@ -1331,7 +1334,7 @@ DTD.components = (function(graphics,particles) {
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius: 200,
-      rotateSpeed: Math.PI / 4,
+      rotateSpeed: Math.PI /4 ,
       reloadTime: 1,
       fill: 'green',
       projectileSpeed: 75,

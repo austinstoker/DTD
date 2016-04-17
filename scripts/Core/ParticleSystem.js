@@ -129,6 +129,35 @@ DTD.particles =  (function(graphics) {
     });
   }
   
+  that.creepEscape = function(inVal) {
+    that.createCircleEffect({
+      center:inVal.center,
+      num:200,
+      rad:15,
+      size:1,
+      color:'red',
+      baseSpeed: 4,
+      baseLife: 1
+    });
+    var p = TextParticle({
+        fill: 'red',
+        stroke: 'white',
+        font:"20px Arial",
+        text:"-1",
+        gravity: .3,
+        position: inVal.center,
+        direction: {x:0,y:-1},
+        speed: Random.nextGaussian(20,3),
+        rotation:0,
+        lifetime: 1,	// How long the particle should live, in seconds
+        alive: 0	// How long the particle has been alive, in seconds
+      });
+    //
+    // Assign a unique name to each particle
+    particles[nextName++] = p;
+  }
+  
+  
   that.createFloatingNumberEffect = function(inVal){
     var p = TextParticle({
         fill: 'green',
