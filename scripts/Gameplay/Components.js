@@ -95,7 +95,9 @@ DTD.components = (function(graphics,particles) {
         get validPosition() { return validPosition;},
         set highlight(value) {highlight = value;},
         get highlight() {return highlight;},
-        get type() { return spec.type; }
+        get type() { return spec.type; },
+        get cost() {return spec.cost;},
+        get refund() {return spec.refund;}
       },
         projectiles = [],
         selected = false,
@@ -604,6 +606,37 @@ DTD.components = (function(graphics,particles) {
       for(var i = 0; i<components.length;i++){
         components[i].render();
       }
+      var pos = {
+        x:components[components.length-1].left,
+        y:components[components.length-1].bottom
+        }
+      graphics.drawText({
+        fill: 'green',
+        stroke: 'green',
+        font:'20px Arial',
+        text:'Cash: '+spec.map.cash,
+        position:pos,
+        hjustify:'left',
+        vjustify:'top'
+      });
+      graphics.drawText({
+        fill: 'blue',
+        stroke: 'blue',
+        font:'20px Arial',
+        text:'Lives: '+spec.map.lives,
+        position:{x:pos.x,y:pos.y+20},
+        hjustify:'left',
+        vjustify:'top'
+      });
+      graphics.drawText({
+        fill: 'black',
+        stroke: 'black',
+        font:'20px Arial',
+        text:'Score: '+spec.map.score,
+        position:{x:pos.x,y:pos.y+40},
+        hjustify:'left',
+        vjustify:'top'
+      });
     }
     
     that.addComponent = function(constructor){
@@ -671,7 +704,11 @@ DTD.components = (function(graphics,particles) {
   // }
   
   function Map(spec){
-    var that = {};
+    var that = {
+      get score() {return score;},
+      get cash() {return cash;},
+      get lives() {return lives;}
+    };
     var towers = [];
     var creeps = [];
     var towerInProgress = undefined;
@@ -680,7 +717,7 @@ DTD.components = (function(graphics,particles) {
     var entrances = [];
     var sumTime=0;
     var score=0;
-    var gold=100;
+    var cash=100;
     var lives=10;
     
     
@@ -703,9 +740,11 @@ DTD.components = (function(graphics,particles) {
     }
     
     function placeTower(pos){
+      if(cash<towerInProgress.cost) return;
       moveTower(pos);
       isNewTowerPosValid();
       if(towerInProgress.validPosition){
+        cash-=towerInProgress.cost;
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
         for(var e=0;e<entrances.length;e++){
@@ -871,10 +910,10 @@ DTD.components = (function(graphics,particles) {
       for(var i = towers.length-1; i>=0; i--)
       {
         if(towers[i].isSelected()===true){
-          gold+=3;
+          cash+=towers[i].refund;
           particles.createFloatingNumberEffect({
             position:towers[i].center,
-            text:'+5'
+            text:'+'+towers[i].refund
           });
           towers.splice(i,1);
         }
@@ -891,7 +930,6 @@ DTD.components = (function(graphics,particles) {
         addCreep(Creep_2({exitNumber:1}));
         addCreep(Creep_3({exitNumber:2})); //air
         addCreep(Creep_3({exitNumber:3})); //air
-        
       }
       var toRemove=[];
       for(var i = 0; i<towers.length; i++)
@@ -910,7 +948,7 @@ DTD.components = (function(graphics,particles) {
             text:'+5'
           })
           score+=5;
-          gold+=5;
+          cash+=5;
           toRemove.push(i);
         }
         creeps[i].update(elapsedTime);
@@ -1170,10 +1208,11 @@ DTD.components = (function(graphics,particles) {
       fill: 'black',
       projectileSpeed: 100,
       damage: 10,
+      cost: 10,
+      refund: 8,
       type: Constants.MixedType
     };
     var that = Tower(spec);
-    
     that.createProjectile = function() {
       return Projectile({
         center: {
@@ -1206,6 +1245,8 @@ DTD.components = (function(graphics,particles) {
       freezePower: 3,
       projectileSpeed: 75,
       damage: 1,
+      cost: 8,
+      refund: 5,
       type: Constants.MixedType
     };
     var that = Tower(spec);
@@ -1243,6 +1284,8 @@ DTD.components = (function(graphics,particles) {
       fill: 'red',
       projectileSpeed: 50,
       damage: 10,
+      cost: 6,
+      refund: 4,
       type: Constants.GroundType
     };
     var that = Tower(spec);
@@ -1280,6 +1323,8 @@ DTD.components = (function(graphics,particles) {
       fill: 'green',
       projectileSpeed: 75,
       damage: 40,
+      cost: 3,
+      refund: 2,
       type: Constants.AirType
     }
     var that = Tower(spec);

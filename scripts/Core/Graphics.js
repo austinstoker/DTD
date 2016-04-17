@@ -176,8 +176,8 @@ DTD.graphics = (function() {
 		if (spec.hasOwnProperty('stroke')) {
 			context.strokeStyle = spec.stroke;
 		}
-		context.textBaseline = 'middle';
-    context.textAlign="center";
+		context.textBaseline = spec.vjustify || 'middle';
+    context.textAlign= spec.hjustify || "center";
 		context.fillText(spec.text, spec.position.x, spec.position.y);
 		context.strokeText(spec.text, spec.position.x, spec.position.y);
 
