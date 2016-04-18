@@ -7,7 +7,8 @@ DTD.model = (function(components, graphics, input, particles) {
       position: {x: 600, y:0},
       map: map
     });
-    var mouse = input.Mouse();
+    var mouse = input.mouse;
+    var keyboard = input.keyboard;
     
     AssetManager.loadImage('images/tower-defense-turrets/turret-1-1.png');
     AssetManager.loadImage('images/tower-defense-turrets/turret-1-2.png');
@@ -39,8 +40,8 @@ DTD.model = (function(components, graphics, input, particles) {
 
     function render() {
         map.render();
-        toolBox.render();
         particles.render();
+        toolBox.render();
     }
 
     function gameLoop(elapsedTime) {
@@ -53,6 +54,7 @@ DTD.model = (function(components, graphics, input, particles) {
         mouse.registerCommand('mouseup',toolBox.handleClick);
         mouse.registerCommand('mouseup',map.handleMouseClick);
         mouse.registerCommand('mousemove',map.handleMouseMove);
+        keyboard.registerConfigurableCommand('Sell Tower',KeyEvent.DOM_VK_S, map.sellTower,false,false)
         //requestAnimationFrame(gameLoop);
     }
   //------------------------------------------------------------------

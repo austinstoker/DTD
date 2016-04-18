@@ -95,9 +95,12 @@ DTD.components = (function(graphics,particles) {
         get validPosition() { return validPosition;},
         set highlight(value) {highlight = value;},
         get highlight() {return highlight;},
-        get type() { return spec.type; }
+        get type() { return spec.type; },
+        get cost() {return spec.cost;},
+        get refund() {return spec.refund;}
       },
         projectiles = [],
+        selected = false,
         highlight = false,
         texture = graphics.Texture(spec),
         targetRotation = spec.rotation,
@@ -264,10 +267,13 @@ DTD.components = (function(graphics,particles) {
             opacity: 0.4
           });
           // base.draw();
+          
+          texture.draw();
+        }
+        that.renderProjectiles = function(){
           for (var i = 0; i < projectiles.length; i++) {
             projectiles[i].render();
           }
-          texture.draw();
         }
         
         function renderSelected() {
@@ -292,15 +298,20 @@ DTD.components = (function(graphics,particles) {
           }
         }
         
+        that.isSelected = function(){
+          return selected;
+        }
         that.select = function() {
           if (that.placed) {
            that.render = renderSelected;
+           selected = true;
           }
         }
         
         that.unselect = function() {
           if (that.placed) {
             that.render = renderPlaced;
+            selected = false;
           }
         }
 
@@ -319,7 +330,7 @@ DTD.components = (function(graphics,particles) {
         get type() { return spec.type; }
       },
         timeSincePuff = 0,
-        puffSpacing = spec.puffSpace | 100;
+        puffSpacing = spec.puffSpace | 5000/spec.speed;
         
       that.didHit = false;
       spec.checkCollisionsFunction = undefined;
@@ -328,15 +339,19 @@ DTD.components = (function(graphics,particles) {
         spec.checkCollisionsFunction = f;
       }
       
-      that.update = function(elapsedTime) {
-        spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
-        spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+      that.updateSmoke = function(elapsedTime){
         timeSincePuff+=elapsedTime;
         if(timeSincePuff>puffSpacing)
         {
           timeSincePuff=0;
           particles.smokePuff({center:spec.center});
         }
+      }
+      
+      that.update = function(elapsedTime) {
+        spec.center.x += spec.direction.x * spec.speed * (elapsedTime / 1000);
+        spec.center.y += spec.direction.y * spec.speed * (elapsedTime / 1000);
+        that.updateSmoke(elapsedTime);
         if (spec.checkCollisionsFunction !== undefined) {
           spec.checkCollisionsFunction(that);
         }
@@ -378,6 +393,7 @@ DTD.components = (function(graphics,particles) {
         if (spec.targetCreep.alive()) {
           calculateDirection();
         }
+        that.updateSmoke(elapsedTime);
         spec.center.x += direction.x * spec.speed * (elapsedTime / 1000);
         spec.center.y += direction.y * spec.speed * (elapsedTime / 1000);
         if (spec.checkCollisionsFunction !== undefined) {
@@ -414,9 +430,12 @@ DTD.components = (function(graphics,particles) {
         get center() { return spec.center },
         get prevCenter() {return spec.prevCenter },
         get rotation() { return spec.rotation },
+        set rotation(value) {spec.rotation = value },
         set centerX(value) { spec.center.x = value },
         set centerY(value) { spec.center.y = value },
         get type() { return spec.type; },
+        get value() {return spec.value; },
+        get escaped() {return spec.escaped || false;},
         get radius() { return Math.min(spec.width, spec.height)/2; } // A tight radius, for a circle inscribed in the creep
       },
       sprite = graphics.SpriteSheet(spec),
@@ -453,7 +472,7 @@ DTD.components = (function(graphics,particles) {
       }
       
       that.update = function(elapsedTime) {
-        var nextPoint, direction;
+
 
         if (elapsedTime < 0 || !that.alive()) {
           return;
@@ -466,7 +485,13 @@ DTD.components = (function(graphics,particles) {
       }
       
       function updateTargets() {
+        var nextPoint, direction;
         nextPoint = pathFunction(spec.exitNumber, spec.center);
+        var nextNextPoint = pathFunction(spec.exitNumber, nextPoint);
+        if(nextPoint.x===nextNextPoint.x&&nextPoint.y===nextNextPoint.y){
+          spec.escaped = true; 
+          spec.lifePoints = 0;
+        }
         if (nextPoint.x !== targetPosition.x || nextPoint.y !== targetPosition.y) {
           targetPosition = nextPoint;
           direction = {
@@ -589,6 +614,37 @@ DTD.components = (function(graphics,particles) {
       for(var i = 0; i<components.length;i++){
         components[i].render();
       }
+      var pos = {
+        x:components[components.length-1].left,
+        y:components[components.length-1].bottom
+        }
+      graphics.drawText({
+        fill: 'green',
+        stroke: 'green',
+        font:'20px Arial',
+        text:'Cash: '+spec.map.cash,
+        position:pos,
+        hjustify:'left',
+        vjustify:'top'
+      });
+      graphics.drawText({
+        fill: 'red',
+        stroke: 'red',
+        font:'20px Arial',
+        text:'Lives: '+spec.map.lives,
+        position:{x:pos.x,y:pos.y+20},
+        hjustify:'left',
+        vjustify:'top'
+      });
+      graphics.drawText({
+        fill: 'black',
+        stroke: 'black',
+        font:'20px Arial',
+        text:'Score: '+spec.map.score,
+        position:{x:pos.x,y:pos.y+40},
+        hjustify:'left',
+        vjustify:'top'
+      });
     }
     
     that.addComponent = function(constructor){
@@ -626,36 +682,41 @@ DTD.components = (function(graphics,particles) {
     return that;
   }
   
-  function Cell(){
-    var that = {};
-    var creeps = [];
+  // function Cell(){
+  //   var that = {};
+  //   var creeps = [];
     
-    that.addCreep = function(creep){
-      creeps.push(creep);
-    }
+  //   that.addCreep = function(creep){
+  //     creeps.push(creep);
+  //   }
     
-    that.checkCollsions = function(projectile){
-      for(var i = 0; i< creeps.length; i++ ){
-        var hit = intersectRectangles(projectile,creeps[i]);
-        if(hit){
-          creeps[i].hit(projectile.damage);
-            creeps[i].slow(projectile.freezePower);
-          projectile.hit();
-          break;
-        }
-      }
-    }
+  //   that.checkCollsions = function(projectile){
+  //     for(var i = 0; i< creeps.length; i++ ){
+  //       var hit = intersectRectangles(projectile,creeps[i]);
+  //       if(hit){
+  //         creeps[i].hit(projectile.damage);
+  //           creeps[i].slow(projectile.freezePower);
+  //         projectile.hit();
+  //         particles.darkPuff({center:projectile.center})
+  //         break;
+  //       }
+  //     }
+  //   }
     
-    that.removeCreep = function(creep){
-      var idx= creeps.indexOf(creep);
-      if(idx!==undefined){
-        creeps.splice(idx);
-      }
-    }
-  }
+  //   that.removeCreep = function(creep){
+  //     var idx= creeps.indexOf(creep);
+  //     if(idx!==undefined){
+  //       creeps.splice(idx);
+  //     }
+  //   }
+  // }
   
   function Map(spec){
-    var that = {};
+    var that = {
+      get score() {return score;},
+      get cash() {return cash;},
+      get lives() {return lives;}
+    };
     var towers = [];
     var creeps = [];
     var towerInProgress = undefined;
@@ -663,6 +724,10 @@ DTD.components = (function(graphics,particles) {
     var cells = [];
     var entrances = [];
     var sumTime=0;
+    var score=0;
+    var cash=100;
+    var lives=10;
+    
     
     function newTowerConstructor(){};
     function internalClickHandler(){};
@@ -683,13 +748,15 @@ DTD.components = (function(graphics,particles) {
     }
     
     function placeTower(pos){
+      if(cash<towerInProgress.cost) return;
       moveTower(pos);
       isNewTowerPosValid();
       if(towerInProgress.validPosition){
+        cash-=towerInProgress.cost;
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
         for(var e=0;e<entrances.length;e++){
-          grids[e] = updateShortestPaths(entrances[e].out,blocked,entrances[e].air);
+          grids[e] = updateShortestPaths(entrances[e],blocked);
         }
         towerInProgress.place();
         towerInProgress.setNearestCreepFunction(getNearestCreep);
@@ -711,7 +778,7 @@ DTD.components = (function(graphics,particles) {
       //check blocking creep paths
       for(var e=0;e<entrances.length;e++){
         var tests = getCellsBlockedByTower(towerInProgress);
-        var tempGrid = updateShortestPaths(entrances[e].out,tests,entrances[e].air);
+        var tempGrid = updateShortestPaths(entrances[e],tests);
         if(tempGrid[entrances[e].in.i][entrances[e].in.j].d > 10000){
           towerInProgress.validPosition = false;
           return;
@@ -762,9 +829,14 @@ DTD.components = (function(graphics,particles) {
     
     function addCreep(creep){
       var entrance = entrances[creep.getExitNumber()].in;
-      var coords = toScreenUnits(entrance);
-      creep.centerX = coords.x+Constants.CreepWidth/2;
-      creep.centerY = coords.y+Constants.CreepHeight/2;
+      var coords = toScreenUnits({
+        i:entrance.i+Math.floor(Math.random()*entrance.w),
+        j:entrance.j+Math.floor(Math.random()*entrance.h),
+      });
+      var next = nextStepTowardExit(creep.getExitNumber(),coords);
+      creep.centerX = next.x;
+      creep.centerY = next.y;
+      creep.rotation = entrance.a;
       creep.setPathFindingFunction(nextStepTowardExit);
       creeps.push(creep);
     }
@@ -842,17 +914,30 @@ DTD.components = (function(graphics,particles) {
       internalMoveHandler(pos);
     }
     
+    that.sellTower = function(){
+      for(var i = towers.length-1; i>=0; i--)
+      {
+        if(towers[i].isSelected()===true){
+          cash+=towers[i].refund;
+          particles.createFloatingNumberEffect({
+            position:towers[i].center,
+            text:'+'+towers[i].refund
+          });
+          towers.splice(i,1);
+        }
+      }
+    }
+    
     that.update = function(elapsedTime){
       //TODO This is just an easy way to add creeps at a reasonable rate
       // this should be replaced with something better when levels are implemented
       sumTime+=elapsedTime;
-      if(sumTime>=2000){
-        sumTime = -200000;
+      if(sumTime>=5000){
+        sumTime = 0;
         addCreep(Creep_1({exitNumber:0}));
         addCreep(Creep_2({exitNumber:1}));
         addCreep(Creep_3({exitNumber:2})); //air
         addCreep(Creep_3({exitNumber:3})); //air
-        
       }
       var toRemove=[];
       for(var i = 0; i<towers.length; i++)
@@ -861,13 +946,27 @@ DTD.components = (function(graphics,particles) {
       }
       for(var i = 0; i<creeps.length; i++)
       {
-        if(!creeps[i].alive())
-        {
-          particles.creepDeath({
+        if(creeps[i].escaped){
+          lives-=1;
+          particles.creepEscape({
             center: creeps[i].center
           });
           toRemove.push(i);
         }
+        if(!creeps[i].alive() && !creeps[i].escaped)
+        {
+          particles.creepDeath({
+            center: creeps[i].center
+          });
+          particles.createFloatingNumberEffect({
+            position:creeps[i].center,
+            text:'+'+creeps[i].value
+          })
+          score+=creeps[i].value;
+          cash+=creeps[i].value;
+          toRemove.push(i);
+        }
+        
         creeps[i].update(elapsedTime);
         updateCreepCells(creeps[i]);
       }
@@ -876,13 +975,18 @@ DTD.components = (function(graphics,particles) {
       }
     }
     
-    function updateShortestPaths(endPoint,tests,isAir){
+    function updateShortestPaths(entrance,tests){
       var myGrid = [];
       myGrid = clearPaths(myGrid);
+      var isAir = entrance.air;
       var stack = [];
       var blocked = [];
-      myGrid[endPoint.i][endPoint.j].d = 0;
-      stack.push(endPoint);
+      for(var a = 0; a<entrance.out.w; a++){
+        for(var b = 0; b<entrance.out.h; b++){
+          myGrid[entrance.out.i+a][entrance.out.j+b].d = 0;
+          stack.push({i:entrance.out.i+a,j:entrance.out.j+b});
+        }
+      }
       
       if(isAir===undefined||isAir===false){
         for(var i=0; i<towers.length;i++){
@@ -1004,10 +1108,15 @@ DTD.components = (function(graphics,particles) {
         var hit = intersectCirclePoint(creeps[i], projectile);
         if(hit && typesMatch(creeps[i], projectile.type)){
           creeps[i].hit(projectile.damage);
+          particles.darkPuff({center:projectile.center});
           if (projectile.freezePower !== undefined) {
             creeps[i].slow(projectile.freezePower);
           }
           if (projectile.damageRadius !== undefined) {
+            particles.grayPuff({
+              center:projectile.center,
+              dim:projectile.damageRadius
+            });
             for(var j = 0; j < creeps.length; j++) {
               if (intersectCircles(creeps[j], projectile) && typesMatch(creeps[j], projectile.type) && i !== j) {
                 creeps[j].hit(projectile.damage);
@@ -1051,13 +1160,16 @@ DTD.components = (function(graphics,particles) {
       if(towerInProgress!==undefined){
         towerInProgress.render();
       }  
+      for(var i = 0; i<towers.length;i++){
+        towers[i].renderProjectiles();
+      }
     }
 
-    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:false});
-    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:false});
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},air:false});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},air:false});
     
-    entrances.push({in:{i:0,j:14},out:{i:29, j:14},air:true});
-    entrances.push({in:{i:15,j:0},out:{i:15, j:29},air:true});
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},air:true});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},air:true});
     
     function clearPaths(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
@@ -1085,17 +1197,17 @@ DTD.components = (function(graphics,particles) {
     
     grids.length = 0;
     for(var e=0;e<entrances.length;e++){
-      grids.push(updateShortestPaths(entrances[e].out,entrances[e].air));
+      grids.push(updateShortestPaths(entrances[e]));
     }
     
-    cells.length = 0;
-    for(var i= 0; i<=spec.width/Constants.GridWidth;i++){
-      var row = []
-      for(var j= 0; j<=spec.height/Constants.GridHeight;j++){
-        row.push(Cell());
-      }
-      cells.push(row);
-    }
+    // cells.length = 0;
+    // for(var i= 0; i<=spec.width/Constants.GridWidth;i++){
+    //   var row = []
+    //   for(var j= 0; j<=spec.height/Constants.GridHeight;j++){
+    //     row.push(Cell());
+    //   }
+    //   cells.push(row);
+    // }
     
     return that;
   }
@@ -1112,10 +1224,11 @@ DTD.components = (function(graphics,particles) {
       fill: 'black',
       projectileSpeed: 100,
       damage: 10,
+      cost: 10,
+      refund: 8,
       type: Constants.MixedType
     };
     var that = Tower(spec);
-    
     that.createProjectile = function() {
       return Projectile({
         center: {
@@ -1145,10 +1258,12 @@ DTD.components = (function(graphics,particles) {
       rotateSpeed: Math.PI / 4,
       reloadTime: 0.5,
       fill: 'blue',
-      freezePower: 0.5,
+      freezePower: 3,
       projectileSpeed: 75,
-      damage: 2,
-      type: Constants.GroundType
+      damage: 1,
+      cost: 8,
+      refund: 5,
+      type: Constants.MixedType
     };
     var that = Tower(spec);
     
@@ -1181,10 +1296,12 @@ DTD.components = (function(graphics,particles) {
       radius: 80,
       rotateSpeed: Math.PI / 4,
       reloadTime: 1.5,
-      damageRadius: 20,
+      damageRadius: 60,
       fill: 'red',
       projectileSpeed: 50,
-      damage: 40,
+      damage: 10,
+      cost: 6,
+      refund: 4,
       type: Constants.GroundType
     };
     var that = Tower(spec);
@@ -1216,12 +1333,14 @@ DTD.components = (function(graphics,particles) {
       baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
-      radius: 40,
-      rotateSpeed: Math.PI / 4,
+      radius: 200,
+      rotateSpeed: Math.PI /4 ,
       reloadTime: 1,
       fill: 'green',
       projectileSpeed: 75,
-      damage: 30,
+      damage: 40,
+      cost: 3,
+      refund: 2,
       type: Constants.AirType
     }
     var that = Tower(spec);
@@ -1256,6 +1375,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 40,
+      value:3,
       exitNumber: spec.exitNumber,
       speed: 40,
       spriteCount: 6,
@@ -1273,6 +1393,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 35,
+      value:2,
       exitNumber: spec.exitNumber,
       speed: 50,
       spriteCount: 4,
@@ -1290,6 +1411,7 @@ DTD.components = (function(graphics,particles) {
       width: Constants.CreepWidth,
       height: Constants.CreepHeight,
       lifePoints: 30,
+      value:1,
       exitNumber: spec.exitNumber,
       speed: 60,
       spriteCount: 4,

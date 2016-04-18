@@ -84,9 +84,10 @@ DTD.input = (function() {
 	function Keyboard() {
 		var that = {
 				keys : {},
-				handlers : [],
+				//handlers : [],
 			},
-			key;
+			key,
+      handlers = [];
 
 		function keyPress(e) {
       if(that.onNextKeyPress!==undefined &&
@@ -128,7 +129,7 @@ DTD.input = (function() {
       altKey=altKey||false;
       if(ctrlKey){key+=1000;}
       if(altKey){key+=10000;}
-			that.handlers.push({ name : name, key : key, handler : handler});
+			handlers.push({ name : name, key : key, handler : handler});
 		};
     
     // ------------------------------------------------------------------
@@ -139,10 +140,10 @@ DTD.input = (function() {
 		// ------------------------------------------------------------------
     that.changeConfigurableCommand = function(name, key,ctrlKey, altKey) {
       var handler;
-      for(var i=that.handlers.length-1; i>-1; i--) {
-        if(that.handlers[i].name===name){
-          handler=that.handlers[i].handler;
-          that.handlers.splice(i,1);
+      for(var i=handlers.length-1; i>-1; i--) {
+        if(handlers[i].name===name){
+          handler=handlers[i].handler;
+          handlers.splice(i,1);
           break;
         }
       }
@@ -168,9 +169,9 @@ DTD.input = (function() {
 		//
 		// ------------------------------------------------------------------
 		that.update = function(elapsedTime) {
-			for (key = 0; key < that.handlers.length; key++) {
-				if (typeof that.keys[that.handlers[key].key] !== 'undefined') {
-					that.handlers[key].handler(elapsedTime);
+			for (var h = 0; h < handlers.length; h++) {
+				if (typeof that.keys[handlers[h].key] !== 'undefined') {
+					handlers[h].handler(elapsedTime);
 				}
 			}
 		};
@@ -183,9 +184,13 @@ DTD.input = (function() {
 		return that;
 	}
 
+
+  var keyboard = Keyboard();
+  var mouse = Mouse();
+  
 	return {
-		Keyboard : Keyboard,
-		Mouse : Mouse
+		keyboard : keyboard,
+		mouse : mouse
 	};
 }());
 
