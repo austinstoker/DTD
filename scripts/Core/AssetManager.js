@@ -4,12 +4,15 @@
 AssetManager = (function() {
   assets = {};
   
-  function loadImage(imageSrc) {
+  function loadImage(key, imageSrc) {
     var image;
-    if (!assets.hasOwnProperty(imageSrc)) {
+    if (imageSrc === undefined) {
+      imageSrc = key;
+    }
+    if (!assets.hasOwnProperty(key)) {
       image = new Image();
       image.src = imageSrc;
-      assets[imageSrc] = image;
+      assets[key] = image;
     }
   }
   
