@@ -16,8 +16,11 @@ DTD.pages['page-highscores'] = (function(screens) {
 	}
 
 	function displayScores() {
-		var highScores = DTD.HighScores.get(),
-			highScoresHTML = document.getElementById('high-scores-list');
+		DTD.HighScores.get(displayCallback);
+	}
+	
+	function displayCallback(highScores) {
+		var highScoresHTML = document.getElementById('high-scores-list');
 
 		//
 		// Clear whatever was already in the display
@@ -35,6 +38,7 @@ DTD.pages['page-highscores'] = (function(screens) {
 
 	return {
 		initialize : initialize,
-		run : run
+		run : run,
+		displayScores : displayScores
 	};
 }(DTD.screens));

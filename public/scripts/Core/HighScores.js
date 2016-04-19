@@ -3,45 +3,40 @@
 // USU CS5410 Game Development Spring 2016
 // Code modifications by Austin Stoker and Kendall Spackman
 
-/* global Brickout */
+/* global DTD */
 
 // ------------------------------------------------------------------
 //
-// High scores implementation.  Behind the abstraction localStorage is
-// used for client-side persistence.
+// High scores implementation. Queries the server for storage.
 //
 // ------------------------------------------------------------------
 DTD.HighScores = (function() {
 	'use strict';
-	var scores = [],
-		previousScores = localStorage.getItem('DTD.highScores');
-
-	if (previousScores !== null) {
-		scores = JSON.parse(previousScores);
-	}
+	var scores = [];
 
 	function add(score) {
-		scores.push(score);
-		scores.sort(function(a, b) {
-			if (a > b) {
-				return -1;
-			} else if (a < b) {
-				return 1;
+		var score = $('#id-scoreBox').val();
+
+		$.ajax({
+			url: 'http://localhost:3000/v1/scores?score=' + score,
+			type: 'POST',
+			error: function() { alert('POST failed'); },
+			success: function() {
+				//get(); // And display...
 			}
-
-			return 0;
 		});
-
-		//
-		// Keep only the best five
-		if (scores.length > 5) {
-			scores = scores.slice(0, 5);
-		}
-
-		localStorage['DTD.highScores'] = JSON.stringify(scores);
 	}
 
-	function get() {
+	function get(callback) {
+		$.ajax({
+			url: 'http://localhost:3000/v1/scores',
+			cache: false,
+			type: 'GET',
+			error: function() { alert('GET failed'); },
+			success: function(data) {
+				callback(data);
+			}
+		});
 		return scores;
 	}
 

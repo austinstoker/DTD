@@ -1,6 +1,7 @@
 var express = require('express'),
 	http = require('http'),
 	path = require('path'),
+  scores = require('./public/routes/high-scores.js'),
 	app = express();
 
 //
@@ -14,6 +15,19 @@ app.use('/scripts', express.static(__dirname + '/scripts'));
 // Define the different routes we support
 app.get('/', function(request, response) {
 	response.sendFile('index.html');
+});
+
+app.get('/v1/scores', scores.all);
+app.post('/v1/scores', scores.add);
+
+//------------------------------------------------------------------
+//
+// Indicate any other api requests are not implemented
+//
+//------------------------------------------------------------------
+app.all('/v1/*', function(request, response) {
+	response.writeHead(501);
+	response.end();
 });
 
 //

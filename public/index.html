@@ -22,8 +22,9 @@
 		<div id = "page-highscores" class = "screen">
 			<h1>High Scores</h1>
 			<ol id = "high-scores-list">
-				<li>7000</li>
 			</ol>
+			<input id="id-scoreBox" type="text">
+			<button onclick="DTD.HighScores.add(); DTD.pages['page-highscores'].displayScores();">Add Score</button>
 			<ul class = "menu">
 				<li><button id = "id-high-scores-back">Back</button></li>
 			</ul>
