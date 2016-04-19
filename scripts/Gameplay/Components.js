@@ -96,8 +96,9 @@ DTD.components = (function(graphics,particles) {
         set highlight(value) {highlight = value;},
         get highlight() {return highlight;},
         get type() { return spec.type; },
-        get cost() {return spec.cost;},
-        get refund() {return spec.refund;}
+        get cost() {return spec.cost[spec.level];},
+        get upgradeCost() { return spec.cost[spec.level + 1]; },
+        get refund() {return spec.refund[spec.level];},
       },
         projectiles = [],
         selected = false,
@@ -123,6 +124,7 @@ DTD.components = (function(graphics,particles) {
       spec.height = Constants.TowerHeight;
       spec.opacity = 0.4;
       spec.targetCreep = undefined;
+      spec.level = 0;
         
         that.setNearestCreepFunction = function(f) {
           nearestCreepFunction = f;
@@ -134,6 +136,18 @@ DTD.components = (function(graphics,particles) {
         
         that.setRotationSpeed = function(speed){
           rotateSpeed = speed;
+        }
+        
+        that.canUpgrade = function() {
+          return spec.level < 2;
+        }
+        
+        that.upgrade = function() {
+          if (spec.level < 2) {
+            spec.level++;
+            spec.imageSrc = spec.imageSrc.substr(0, spec.imageSrc.length - 1) + (spec.level + 1);
+            texture = graphics.Texture(spec);
+          }
         }
         
         function updatePlacing(elapsedTime) {
@@ -928,6 +942,18 @@ DTD.components = (function(graphics,particles) {
       }
     }
     
+    that.upgradeTower = function() {
+      for(var i = towers.length-1; i>=0; i--)
+      {
+        if(towers[i].isSelected()===true){
+          if (towers[i].canUpgrade() && cash > towers[i].upgradeCost) {
+            cash -= towers[i].upgradeCost;
+            towers[i].upgrade();
+          }
+        }
+      }
+    }
+    
     that.update = function(elapsedTime){
       //TODO This is just an easy way to add creeps at a reasonable rate
       // this should be replaced with something better when levels are implemented
@@ -1214,18 +1240,18 @@ DTD.components = (function(graphics,particles) {
   
   function Tower_Projectile(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-2-1.png',
+      imageSrc: 'projectile-1',
       baseColor: 'rgba(79,6,39,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius: 50,
       rotateSpeed: Math.PI / 4,
       reloadTime: 0.5,
-      fill: 'black',
       projectileSpeed: 100,
-      damage: 10,
-      cost: 10,
-      refund: 8,
+      damage: [10, 20, 30],
+      cost: [10, 15, 20],
+      refund: [8, 15, 22],
+      fill: 'black',
       type: Constants.MixedType
     };
     var that = Tower(spec);
@@ -1240,7 +1266,7 @@ DTD.components = (function(graphics,particles) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.damage,
+        damage: spec.damage[spec.level],
         fill: spec.fill,
         type: spec.type
       });
@@ -1250,19 +1276,19 @@ DTD.components = (function(graphics,particles) {
 
   function Tower_Slowing(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-1-1.png',
+      imageSrc: 'slowing-1',
       baseColor: 'rgba(3,216,226,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
       radius: 50,
       rotateSpeed: Math.PI / 4,
       reloadTime: 0.5,
-      fill: 'blue',
       freezePower: 3,
       projectileSpeed: 75,
-      damage: 1,
-      cost: 8,
-      refund: 5,
+      damage: [1, 3, 5],
+      cost: [8, 10, 12],
+      refund: [5, 12, 20],
+      fill: 'blue',
       type: Constants.MixedType
     };
     var that = Tower(spec);
@@ -1278,7 +1304,7 @@ DTD.components = (function(graphics,particles) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.damage,
+        damage: spec.damage[spec.level],
         fill: spec.fill,
         freezePower: spec.freezePower,
         type: spec.type
@@ -1289,7 +1315,7 @@ DTD.components = (function(graphics,particles) {
   
   function Tower_Bomb(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-7-1.png',
+      imageSrc: 'bomb-1',
       baseColor: 'rgba(255,84,0,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1299,9 +1325,9 @@ DTD.components = (function(graphics,particles) {
       damageRadius: 60,
       fill: 'red',
       projectileSpeed: 50,
-      damage: 10,
-      cost: 6,
-      refund: 4,
+      damage: [10, 15, 20],
+      cost: [6, 8, 10],
+      refund: [4, 10, 17],
       type: Constants.GroundType
     };
     var that = Tower(spec);
@@ -1317,7 +1343,7 @@ DTD.components = (function(graphics,particles) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.damage,
+        damage: spec.damage[spec.level],
         fill: spec.fill,
         damageRadius: spec.damageRadius,
         type: spec.type
@@ -1329,7 +1355,7 @@ DTD.components = (function(graphics,particles) {
   
   function Tower_Missile(){
     var spec = {
-      image: 'images/tower-defense-turrets/turret-5-1.png',
+      imageSrc: 'missile-1',
       baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1338,9 +1364,9 @@ DTD.components = (function(graphics,particles) {
       reloadTime: 1,
       fill: 'green',
       projectileSpeed: 75,
-      damage: 40,
-      cost: 3,
-      refund: 2,
+      damage: [40, 60, 70],
+      cost: [3, 5, 7],
+      refund: [2, 4, 6],
       type: Constants.AirType
     }
     var that = Tower(spec);
@@ -1356,7 +1382,7 @@ DTD.components = (function(graphics,particles) {
           x: Math.cos(spec.rotation),
           y: Math.sin(spec.rotation)
         },
-        damage: spec.damage,
+        damage: spec.damage[spec.level],
         fill: spec.fill,
         targetCreep: spec.targetCreep,
         type: spec.type

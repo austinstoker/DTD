@@ -186,7 +186,7 @@ DTD.graphics = (function() {
 
   function Texture(spec) {
       var that = {};
-      spec.image = AssetManager.getImage(spec.image);
+      spec.image = AssetManager.getImage(spec.imageSrc);
 			if (spec.opacity === undefined) {
 				spec.opacity = 1;
 			}
