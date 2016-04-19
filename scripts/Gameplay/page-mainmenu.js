@@ -13,7 +13,11 @@ DTD.pages['page-mainmenu'] = (function(screens) {
 		document.getElementById('id-new-game').addEventListener(
 			'click',
 			function() {screens.showScreen('page-game'); });
-
+    
+    document.getElementById('id-config').addEventListener(
+			'click',
+			function() { screens.showScreen('page-config'); });
+      
 		document.getElementById('id-high-scores').addEventListener(
 			'click',
 			function() { screens.showScreen('page-highscores'); });

@@ -54,7 +54,8 @@ DTD.model = (function(components, graphics, input, particles) {
         mouse.registerCommand('mouseup',toolBox.handleClick);
         mouse.registerCommand('mouseup',map.handleMouseClick);
         mouse.registerCommand('mousemove',map.handleMouseMove);
-        keyboard.registerConfigurableCommand('Sell Tower',KeyEvent.DOM_VK_S, map.sellTower,false,false)
+        keyboard.registerConfigurableCommand('Sell Tower',KeyEvent.DOM_VK_S, map.sellTower,true,false);
+        keyboard.registerConfigurableCommand('Sell Tower Again',KeyEvent.DOM_VK_S, map.sellTower,false,false);
         //requestAnimationFrame(gameLoop);
     }
   //------------------------------------------------------------------
