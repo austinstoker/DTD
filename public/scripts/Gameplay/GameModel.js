@@ -1,4 +1,4 @@
-DTD.model = (function(components, graphics, input, particles) {
+DTD.model = (function(components, graphics, input, particles, localStorage) {
     var map = components.Map({
       width:600,
       height:600
@@ -37,8 +37,18 @@ DTD.model = (function(components, graphics, input, particles) {
         mouse.registerCommand('mouseup',toolBox.handleClick);
         mouse.registerCommand('mouseup',map.handleMouseClick);
         mouse.registerCommand('mousemove',map.handleMouseMove);
-        keyboard.registerConfigurableCommand('Sell Tower',KeyEvent.DOM_VK_S, map.sellTower,false,false);
-        keyboard.registerConfigurableCommand('Upgrade Tower',KeyEvent.DOM_VK_U, map.upgradeTower,false,false);
+        var l = localStorage.get();
+        var sellKey = KeyEvent.DOM_VK_S;
+        if(l.hasOwnProperty('Sell Tower')){
+          sellKey = l['Sell Tower'];
+        }
+        var upgradeKey = KeyEvent.DOM_VK_U;
+        if(l.hasOwnProperty('Upgrade Tower')){
+          upgradeKey = l['Upgrade Tower'];
+        }
+        
+        keyboard.registerConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
+        keyboard.registerConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
         //requestAnimationFrame(gameLoop);
     }
   //------------------------------------------------------------------
@@ -56,4 +66,4 @@ DTD.model = (function(components, graphics, input, particles) {
         update: update,
         render: render
     }
-}(DTD.components, DTD.graphics, DTD.input, DTD.particles));
+}(DTD.components, DTD.graphics, DTD.input, DTD.particles,DTD.localStorage));
