@@ -27,12 +27,6 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
         toolBox.render();
     }
 
-    function gameLoop(elapsedTime) {
-        update(elapsedTime);
-        render();
-        requestAnimationFrame(gameLoop);
-    }
-
     function initialize() {
         mouse.registerCommand('mouseup',toolBox.handleClick);
         mouse.registerCommand('mouseup',map.handleMouseClick);
@@ -54,7 +48,6 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
         keyboard.registerConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
         keyboard.registerConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
         keyboard.registerConfigurableCommand('Start Level',startKey, map.startLevel,false,false);
-        //requestAnimationFrame(gameLoop);
     }
   //------------------------------------------------------------------
 	//

@@ -909,9 +909,6 @@ DTD.components = (function(graphics,particles,highscores) {
     var levelComplete = true;
     var gameOver = false;
     
-    
-    
-    
     function newTowerConstructor(){};
     function internalClickHandler(){};
     function internalMoveHandler(){};
@@ -1043,29 +1040,17 @@ DTD.components = (function(graphics,particles,highscores) {
       creeps.push(creep);
     }
     
-    // function updateCreepCells(creep){
-    //   var curCell = toMapUnits(creep.center);
-    //   var prevCell = toMapUnits(creep.prevCenter);
-    //   if(curCell.i===prevCell.i && curCell.j===prevCell.j){
-    //     return;
-    //   }
-    //   for(var i= prevCell.i-1; i<=prevCell.i+1;i++){
-    //     for(var j= prevCell.j-1; j<=prevCell.j+1;j++){
-    //       cells[i][j].removeCreep(creep);
-    //     }
-    //   }
-    //   for(var i= curCell.i-1; i<=curCell.i+1;i++){
-    //     for(var j= curCell.j-1; j<=curCell.j+1;j++){
-    //       cells[i][j].addCreep(creep);
-    //     }
-    //   }
-    // }
+    function endGame() {
+      console.log("Ending game");
+      gameOver = true;
+      highscores.add(score);
+      that.update = updateEnd;
+    }
     
     that.startLevel = function(){
       if(!levelComplete){return;}
       if(curLevel>=levels.length-1){
-        gameOver = true;
-        return
+        return;
       }
       levelComplete = false;
       curLevel++;
@@ -1157,7 +1142,7 @@ DTD.components = (function(graphics,particles,highscores) {
       }
     }
     
-    that.update = function(elapsedTime){
+    function updatePlaying(elapsedTime){
       if(curLevel>-1){
         levels[curLevel].update(elapsedTime);
         var newCreep = levels[curLevel].getCreep();
@@ -1170,6 +1155,9 @@ DTD.components = (function(graphics,particles,highscores) {
               for(var e=0;e<entrances.length;e++){
                 grids.push(updateShortestPaths(entrances[e]));
               }
+            }
+            else {
+              endGame();
             }
           }
         }
@@ -1188,7 +1176,7 @@ DTD.components = (function(graphics,particles,highscores) {
         if(creeps[i].escaped){
           lives-=1;
           if(lives<1){
-            gameOver=true;
+            endGame();
           }
           particles.creepEscape({
             center: creeps[i].center
@@ -1205,7 +1193,6 @@ DTD.components = (function(graphics,particles,highscores) {
             text:'+'+creeps[i].value
           })
           score+=creeps[i].value;
-          highscores.add(score);
           cash+=creeps[i].value;
           toRemove.push(i);
         }
@@ -1217,6 +1204,10 @@ DTD.components = (function(graphics,particles,highscores) {
         creeps.splice(toRemove[i],1);
       }
     }
+    
+    function updateEnd() {}
+    
+    that.update = updatePlaying;
     
     function updateShortestPaths(entrance,tests){
       var myGrid = [];
@@ -1423,6 +1414,17 @@ DTD.components = (function(graphics,particles,highscores) {
       }  
       for(var i = 0; i<towers.length;i++){
         towers[i].renderProjectiles();
+      }
+      if (gameOver) {
+        graphics.drawText({
+        fill: 'black',
+        stroke: 'black',
+        font:'100px Arial',
+        text:'Game Over',
+        position: {x:50, y:235},
+        hjustify:'left',
+        vjustify:'top'
+        })
       }
     }
 

@@ -3,7 +3,7 @@
 // USU CS5410 Game Development Spring 2016
 // Code modifications by Austin Stoker and Kendall Spackman
 
-/* global Brickout */
+/* global DTD */
 
 // ------------------------------------------------------------------
 //
