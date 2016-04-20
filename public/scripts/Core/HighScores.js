@@ -15,7 +15,7 @@ DTD.HighScores = (function() {
 	var scores = [];
 
 	function add(score) {
-		var score = $('#id-scoreBox').val();
+		//var score = $('#id-scoreBox').val();
 
 		$.ajax({
 			url: 'http://localhost:3000/v1/scores?score=' + score,
