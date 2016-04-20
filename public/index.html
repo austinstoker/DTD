@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html lang = "en-US">
+<head>
+	<meta charset = "UTF-8">
+	<title>DTD</title>
+	
+	<link rel = "stylesheet" type = "text/css" href = "styles/game.css">
+</head>
+<body>
+	<div id = "game">
+		<div id = "page-mainmenu" class = "screen">
+			<ul class = "menu">
+				<li><button id = "id-new-game">New&nbsp;Game</button></li>
+        <li><button id = "id-keyboard-config">Keyboard&nbsp;Configuration</button></li>
+        <li><button id = "id-high-scores">High&nbsp;Scores</button></li>
+				<li><button id = "id-about">About</button></li>
+			</ul>
+		</div>
+		<div id = "page-game" class = "screen">
+			<canvas id = "canvas-main" width = "800" height = "600"></canvas>
+		</div>
+		<div id = "page-highscores" class = "screen">
+			<h1>High Scores</h1>
+			<ol id = "high-scores-list">
+			</ol>
+			<input id="id-scoreBox" type="text">
+			<button onclick="DTD.HighScores.add(); DTD.pages['page-highscores'].displayScores();">Add Score</button>
+			<ul class = "menu">
+				<li><button id = "id-high-scores-back">Back</button></li>
+			</ul>
+		</div>
+    <div id = "page-keyboard-config" class = "screen">
+			<h1>High Scores</h1>
+			<ol id = "key-bindings">
+				<li>7000</li>
+			</ol>
+			<ul class = "menu">
+				<li><button id = "id-keyboard-config-back">Back</button></li>
+			</ul>
+		</div>
+		<div id = "page-about" class = "screen">
+			<h1>About</h1>
+			<p>Developed by<br/>
+			   Austin Stoker and Kendall Spackman<br/>
+         using code samples by Dean Mathias<br/>
+			   Images by Silviu Ploisteanu<br/>
+				 (www.HireFreelanceArtist.com)</p>
+			<ul class = "menu">
+				<li><button id = "id-about-back">Back</button></li>
+			</ul>
+		</div>
+	</div>
+	
+	<script>
+      DTD = {
+			pages : {},
+			images : {},
+
+			status : {
+				preloadRequest : 0,
+				preloadComplete : 0
+			}
+		};
+	</script>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src = "scripts/modernizr.js"></script>
+	<script src = "scripts/loader.js"></script>
+</body>
+</html>
