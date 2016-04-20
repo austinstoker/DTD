@@ -46,7 +46,7 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
         if(l.hasOwnProperty('Upgrade Tower')){
           upgradeKey = l['Upgrade Tower'];
         }
-        var startKey = KeyEvent.DOM_VK_L;
+        var startKey = KeyEvent.DOM_VK_G;
         if(l.hasOwnProperty('Start Level')){
           startKey = l['Start Level'];
         }
