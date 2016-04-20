@@ -487,6 +487,10 @@ DTD.components = (function(graphics,particles,highscores) {
         return spec.exitNumber;
       }
       
+      that.setExitNumber = function(val){
+        spec.exitNumber = val;
+      }
+      
       that.update = function(elapsedTime) {
 
 
@@ -729,6 +733,161 @@ DTD.components = (function(graphics,particles,highscores) {
   //     }
   //   }
   // }
+  function Wave(spec){
+    var that = {
+      get isDone(){return isDone;}
+    };
+    var creeps = [];
+    var timeToNextCreep = 0;
+    var count =0;
+    var isDone=false;
+    that.addCreep = function(creep){
+      creeps.push(creep);
+    }
+    
+    function getNextCreep(){
+      if(isDone){return undefined;}
+      
+      var idx = Math.floor(Math.random()*creeps.length);
+      var creep = creeps[idx]({exitNumber:spec.exitNum});
+      
+      if(count>=spec.numCreeps){
+        isDone = true;
+      }
+      count++;
+      return creep;
+    }
+    
+    function getNextTime(){
+      return Random.nextGaussian(spec.averageTime,spec.stdDev);
+    }
+    
+    that.getCreep = function(){
+      if(timeToNextCreep<0){
+        count++;
+        timeToNextCreep = getNextTime();
+        return getNextCreep();
+      }
+      return undefined;
+    }
+    
+    that.update = function(elapsedTime){
+      timeToNextCreep-=elapsedTime;
+    }
+    return that;
+  }
+  
+  function Level(spec){
+    var that = {
+      get entrances() {return spec.entrances;},
+      get isDone() {return isDone;}
+    };
+    var curWave = 0;
+    var isDone = false;
+    
+    
+    that.update = function(elapsedTime){
+      for(var wave in spec.waves){
+        spec.waves[wave].update(elapsedTime);
+      }
+    }
+    
+    that.getCreep = function(){
+      if(spec.waves[curWave].isDone){
+        if(curWave>=spec.waves.length-1){
+          isDone = true;
+          return undefined;
+        }
+        else{
+          curWave++;
+        }
+        
+      }
+      return spec.waves[curWave].getCreep();
+    }
+    return that;
+  }
+  
+  function makeLevel(){
+    var wave1 = Wave({numCreeps:20,averageTime: 1000,stdDev:200});
+    wave1.addCreep(Creep_1);
+    
+    var wave2 = Wave({numCreeps:50,averageTime: 200,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var wave3 = Wave({numCreeps:2,averageTime: 6000,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var entrances = [];
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.GroundType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.GroundType});
+    
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.AirType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.AirType});
+    
+    var level = Level({waves:[wave1,wave2],entrances:entrances});
+    return level;
+  }
+  
+  function makeLevel2(){
+    var wave1 = Wave({numCreeps:20,averageTime: 1000,stdDev:200});
+    wave1.addCreep(Creep_1);
+    
+    var wave2 = Wave({numCreeps:50,averageTime: 200,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var wave3 = Wave({numCreeps:2,averageTime: 6000,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var entrances = [];
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.GroundType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.GroundType});
+    entrances.push({in:{i:4,j:0,w:5,h:1,a:Math.PI/2},out:{i:4, j:29,w:5,h:1},type:Constants.GroundType});
+    
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.AirType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.AirType});
+    
+    var level = Level({waves:[wave1,wave2],entrances:entrances});
+    return level;
+  }
+  
+  function makeLevel3(){
+    var wave1 = Wave({numCreeps:20,averageTime: 1000,stdDev:200});
+    wave1.addCreep(Creep_1);
+    
+    var wave2 = Wave({numCreeps:50,averageTime: 200,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var wave3 = Wave({numCreeps:2,averageTime: 6000,stdDev:200});
+    wave2.addCreep(Creep_1);
+    wave2.addCreep(Creep_2);
+    wave2.addCreep(Creep_3);
+    
+    var entrances = [];
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.GroundType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.GroundType});
+    entrances.push({in:{i:4,j:0,w:5,h:1,a:Math.PI/2},out:{i:4, j:29,w:5,h:1},type:Constants.GroundType});
+    entrances.push({in:{i:20,j:0,w:5,h:1,a:Math.PI/2},out:{i:20, j:29,w:5,h:1},type:Constants.GroundType});
+    
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.AirType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.AirType});
+    entrances.push({in:{i:4,j:0,w:5,h:1,a:Math.PI/2},out:{i:4, j:29,w:5,h:1},type:Constants.AirType});
+    entrances.push({in:{i:20,j:0,w:5,h:1,a:Math.PI/2},out:{i:20, j:29,w:5,h:1},type:Constants.AirType});
+    
+    var level = Level({waves:[wave1,wave2],entrances:entrances});
+    return level;
+  }
+  
   
   function Map(spec){
     var that = {
@@ -742,10 +901,15 @@ DTD.components = (function(graphics,particles,highscores) {
     var grids = [];
     var cells = [];
     var entrances = [];
-    var sumTime=0;
     var score=0;
     var cash=100;
     var lives=10;
+    var curLevel = -1;
+    var levels = [makeLevel(),makeLevel2(),makeLevel3()];
+    var levelComplete = true;
+    var gameOver = false;
+    
+    
     
     
     function newTowerConstructor(){};
@@ -858,6 +1022,14 @@ DTD.components = (function(graphics,particles,highscores) {
     }
     
     function addCreep(creep){
+      var exitNumber = creep.getExitNumber();
+      if(exitNumber===undefined){
+        exitNumber = Math.floor(Math.random()*entrances.length);
+        while(creep.type !== entrances[exitNumber].type){
+          exitNumber = Math.floor(Math.random()*entrances.length);
+        }
+        creep.setExitNumber(exitNumber);
+      }
       var entrance = entrances[creep.getExitNumber()].in;
       var coords = toScreenUnits({
         i:entrance.i+Math.floor(Math.random()*(entrance.w-1)),
@@ -871,21 +1043,36 @@ DTD.components = (function(graphics,particles,highscores) {
       creeps.push(creep);
     }
     
-    function updateCreepCells(creep){
-      var curCell = toMapUnits(creep.center);
-      var prevCell = toMapUnits(creep.prevCenter);
-      if(curCell.i===prevCell.i && curCell.j===prevCell.j){
-        return;
+    // function updateCreepCells(creep){
+    //   var curCell = toMapUnits(creep.center);
+    //   var prevCell = toMapUnits(creep.prevCenter);
+    //   if(curCell.i===prevCell.i && curCell.j===prevCell.j){
+    //     return;
+    //   }
+    //   for(var i= prevCell.i-1; i<=prevCell.i+1;i++){
+    //     for(var j= prevCell.j-1; j<=prevCell.j+1;j++){
+    //       cells[i][j].removeCreep(creep);
+    //     }
+    //   }
+    //   for(var i= curCell.i-1; i<=curCell.i+1;i++){
+    //     for(var j= curCell.j-1; j<=curCell.j+1;j++){
+    //       cells[i][j].addCreep(creep);
+    //     }
+    //   }
+    // }
+    
+    that.startLevel = function(){
+      if(!levelComplete){return;}
+      if(curLevel>=levels.length-1){
+        gameOver = true;
+        return
       }
-      for(var i= prevCell.i-1; i<=prevCell.i+1;i++){
-        for(var j= prevCell.j-1; j<=prevCell.j+1;j++){
-          cells[i][j].removeCreep(creep);
-        }
-      }
-      for(var i= curCell.i-1; i<=curCell.i+1;i++){
-        for(var j= curCell.j-1; j<=curCell.j+1;j++){
-          cells[i][j].addCreep(creep);
-        }
+      levelComplete = false;
+      curLevel++;
+      entrances = levels[curLevel].entrances;
+      grids.length = 0;
+      for(var e=0;e<entrances.length;e++){
+        grids.push(updateShortestPaths(entrances[e]));
       }
     }
     
@@ -971,16 +1158,26 @@ DTD.components = (function(graphics,particles,highscores) {
     }
     
     that.update = function(elapsedTime){
-      //TODO This is just an easy way to add creeps at a reasonable rate
-      // this should be replaced with something better when levels are implemented
-      sumTime+=elapsedTime;
-      if(sumTime>=5000){
-        sumTime = 0;
-        addCreep(Creep_1({exitNumber:0}));
-        addCreep(Creep_2({exitNumber:1}));
-        addCreep(Creep_3({exitNumber:2})); //air
-        addCreep(Creep_3({exitNumber:3})); //air
+      if(curLevel>-1){
+        levels[curLevel].update(elapsedTime);
+        var newCreep = levels[curLevel].getCreep();
+        if(newCreep===undefined){
+          if(levels[curLevel].isDone && creeps.length===0){
+            levelComplete = true;
+            if(curLevel<levels.length-1){
+              entrances = levels[curLevel+1].entrances;
+              grids.length = 0;
+              for(var e=0;e<entrances.length;e++){
+                grids.push(updateShortestPaths(entrances[e]));
+              }
+            }
+          }
+        }
+        else{
+          addCreep(newCreep);
+        }
       }
+      
       var toRemove=[];
       for(var i = 0; i<towers.length; i++)
       {
@@ -990,6 +1187,9 @@ DTD.components = (function(graphics,particles,highscores) {
       {
         if(creeps[i].escaped){
           lives-=1;
+          if(lives<1){
+            gameOver=true;
+          }
           particles.creepEscape({
             center: creeps[i].center
           });
@@ -1011,7 +1211,7 @@ DTD.components = (function(graphics,particles,highscores) {
         }
         
         creeps[i].update(elapsedTime);
-        updateCreepCells(creeps[i]);
+        //updateCreepCells(creeps[i]);
       }
       for(var i = toRemove.length-1; i>=0;i--){
         creeps.splice(toRemove[i],1);
@@ -1021,7 +1221,7 @@ DTD.components = (function(graphics,particles,highscores) {
     function updateShortestPaths(entrance,tests){
       var myGrid = [];
       myGrid = clearPaths(myGrid);
-      var isAir = entrance.air;
+      var isAir = entrance.type===Constants.AirType;
       var stack = [];
       var blocked = [];
       for(var a = 0; a<entrance.out.w; a++){
@@ -1226,11 +1426,11 @@ DTD.components = (function(graphics,particles,highscores) {
       }
     }
 
-    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},air:false});
-    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},air:false});
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.GroundType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.GroundType});
     
-    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},air:true});
-    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},air:true});
+    entrances.push({in:{i:0,j:12,w:1,h:5,a:0},out:{i:29, j:12,w:1,h:5},type:Constants.AirType});
+    entrances.push({in:{i:12,j:0,w:5,h:1,a:Math.PI/2},out:{i:12, j:29,w:5,h:1},type:Constants.AirType});
     
     function clearPaths(theGrid){
       for(var i=0; i<spec.width/Constants.GridWidth; i++){
@@ -1441,7 +1641,7 @@ DTD.components = (function(graphics,particles,highscores) {
       speed: 40,
       spriteCount: 6,
       spriteTime: [ 1000, 200, 100, 1000, 100, 200 ],
-      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
+      type: Constants.GroundType
     });
   }
   
@@ -1459,7 +1659,7 @@ DTD.components = (function(graphics,particles,highscores) {
       speed: 50,
       spriteCount: 4,
       spriteTime: [ 200, 1000, 200, 600 ],
-      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
+      type: Constants.GroundType
     });
   }
   
@@ -1477,7 +1677,7 @@ DTD.components = (function(graphics,particles,highscores) {
       speed: 60,
       spriteCount: 4,
       spriteTime: [ 1000, 200, 200, 200 ],
-      type: (spec.exitNumber < 2) ? Constants.GroundType : Constants.AirType
+      type: Constants.AirType
     });
   }
 

@@ -46,9 +46,14 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
         if(l.hasOwnProperty('Upgrade Tower')){
           upgradeKey = l['Upgrade Tower'];
         }
+        var startKey = KeyEvent.DOM_VK_G;
+        if(l.hasOwnProperty('Start Level')){
+          startKey = l['Start Level'];
+        }
         
         keyboard.registerConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
         keyboard.registerConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
+        keyboard.registerConfigurableCommand('Start Level',startKey, map.startLevel,false,false);
         //requestAnimationFrame(gameLoop);
     }
   //------------------------------------------------------------------
