@@ -10,9 +10,19 @@ DTD.pages['page-mainmenu'] = (function(screens) {
 	function initialize() {
 		//
 		// Setup each of menu events for the screens
-		document.getElementById('id-new-game').addEventListener(
+		document.getElementById('id-resume-game').addEventListener(
 			'click',
-			function() {screens.showScreen('page-game'); });
+			function() {
+        screens.showScreen('page-game');
+         document.getElementById('id-resume-game').innerHTML = 'Resume Game';
+         document.getElementById('id-refresh').hidden=false;
+        });
+    document.getElementById('id-refresh').addEventListener(
+      'click',
+			function() { 
+        window.location.reload();
+      }
+    )
     document.getElementById('id-config').addEventListener(
 			'click',
 			function() { screens.showScreen('page-config'); });

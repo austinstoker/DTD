@@ -729,6 +729,54 @@ DTD.components = (function(graphics,particles,highscores) {
   //     }
   //   }
   // }
+  function Wave(spec){
+    var that = {
+      get isDone(){return isDone;}
+    };
+    var creeps = [];
+    var timeToNextCreep = 0;
+    var count =0;
+    var isDone=false;
+    that.addCreep = function(creep){
+      creeps.push(creep);
+    }
+    
+    function getRandomCreep(){
+      if(isDone){return undefined;}
+      var idx = Math.floor(Math.random()*creeps.length);
+      var creep = creeps[idx]();
+      
+      if(count>=spec.numCreeps){
+        isDone = true;
+      }
+      return creep;
+    }
+    
+    function getNextTime(){
+      return Random.nextGaussian(spec.averageTime,spec.stdDev);
+    }
+    
+    that.getCreep = function(){
+      if(timeToNextCreep<0){
+        count++;
+        timeToNextCreep = getNextTime();
+        return getRandomCreep();
+      }
+      return undefined;
+    }
+    
+    that.update = function(elapsedTime){
+      timeToNextCreep-=elapsedTime;
+    }
+    return that;
+  }
+  
+  function Level(spec){
+    var that = {};
+    
+    
+    return that;
+  }
   
   function Map(spec){
     var that = {
@@ -746,6 +794,7 @@ DTD.components = (function(graphics,particles,highscores) {
     var score=0;
     var cash=100;
     var lives=10;
+    
     
     
     function newTowerConstructor(){};
