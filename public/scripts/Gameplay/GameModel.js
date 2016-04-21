@@ -2,13 +2,17 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
     var map = components.Map({
       width:600,
       height:600
-    });
-    var toolBox = components.ToolBox({
+    }),
+    toolBox = components.ToolBox({
       position: {x: 600, y:0},
       map: map
-    });
-    var mouse = input.mouse;
-    var keyboard = input.keyboard;
+    }),
+    mouse = input.mouse,
+    keyboard = input.keyboard,
+    sellKey,
+    upgradeKey,
+    startKey,
+    music;
     
     toolBox.addComponent(components.Tower_Projectile);
     toolBox.addComponent(components.Tower_Slowing);
@@ -28,26 +32,40 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
     }
 
     function initialize() {
-        mouse.registerCommand('mouseup',toolBox.handleClick);
-        mouse.registerCommand('mouseup',map.handleMouseClick);
-        mouse.registerCommand('mousemove',map.handleMouseMove);
-        var l = localStorage.get();
-        var sellKey = KeyEvent.DOM_VK_S;
-        if(l.hasOwnProperty('Sell Tower')){
-          sellKey = l['Sell Tower'];
-        }
-        var upgradeKey = KeyEvent.DOM_VK_U;
-        if(l.hasOwnProperty('Upgrade Tower')){
-          upgradeKey = l['Upgrade Tower'];
-        }
-        var startKey = KeyEvent.DOM_VK_G;
-        if(l.hasOwnProperty('Start Level')){
-          startKey = l['Start Level'];
-        }
-        
-        keyboard.registerConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
-        keyboard.registerConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
-        keyboard.registerConfigurableCommand('Start Level',startKey, map.startLevel,false,false);
+      music = new Audio('audio/music.mp3');
+      music.loop = true;
+      music.play();
+      mouse.registerCommand('mouseup',toolBox.handleClick);
+      mouse.registerCommand('mouseup',map.handleMouseClick);
+      mouse.registerCommand('mousemove',map.handleMouseMove);
+      var l = localStorage.get();
+      sellKey = KeyEvent.DOM_VK_S;
+      if(l.hasOwnProperty('Sell Tower')){
+        sellKey = l['Sell Tower'];
+      }
+      upgradeKey = KeyEvent.DOM_VK_U;
+      if(l.hasOwnProperty('Upgrade Tower')){
+        upgradeKey = l['Upgrade Tower'];
+      }
+      startKey = KeyEvent.DOM_VK_G;
+      if(l.hasOwnProperty('Start Level')){
+        startKey = l['Start Level'];
+      }
+      
+      keyboard.registerConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
+      keyboard.registerConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
+      keyboard.registerConfigurableCommand('Start Level',startKey, map.startLevel,false,false);
+    }
+    
+    function pause() {
+      cancelNextRequest = true;
+      music.pause();
+      mouse.unregisterCommand('mouseup',toolBox.handleClick);
+      mouse.unregisterCommand('mouseup',map.handleMouseClick);
+      mouse.unregisterCommand('mousemove',map.handleMouseMove);
+      keyboard.unregisterConfigurableCommand('Sell Tower',sellKey, map.sellTower,false,false);
+      keyboard.unregisterConfigurableCommand('Upgrade Tower',upgradeKey, map.upgradeTower,false,false);
+      keyboard.unregisterConfigurableCommand('Start Level',startKey, map.startLevel,false,false);
     }
   //------------------------------------------------------------------
 	//
@@ -60,6 +78,7 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
   
     return {
         initialize: initialize,
+        pause: pause,
         processInput: processInput,
         update: update,
         render: render

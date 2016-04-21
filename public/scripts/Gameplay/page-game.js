@@ -18,8 +18,8 @@ DTD.pages['page-game'] = (function(gameModel, screens, graphics, input) {
 
 		keyboard.registerCommand(KeyEvent.DOM_VK_ESCAPE, function() {
 			//
-			// Stop the game loop by canceling the request for the next animation frame
-			cancelNextRequest = true;
+			// Pause the game
+			gameModel.pause();
 			//
 			// Then, return to the main menu
 			screens.showScreen('page-mainmenu');

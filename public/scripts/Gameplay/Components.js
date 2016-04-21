@@ -1356,7 +1356,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
               center:projectile.center,
               dim:projectile.damageRadius
             });
-            new Audio('audio/bomb_explosion.wav').play();
             for(var j = 0; j < creeps.length; j++) {
               if (intersectCircles(creeps[j], projectile) && typesMatch(creeps[j], projectile.type) && i !== j) {
                 creeps[j].hit(projectile.damage);
