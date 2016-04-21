@@ -1,5 +1,5 @@
 
-DTD.components = (function(graphics,particles,highscores) {
+DTD.components = (function(graphics,particles,highscores,audio) {
 
   //------------------------------------------------------------------
   //
@@ -235,6 +235,9 @@ DTD.components = (function(graphics,particles,highscores) {
           proj.setCheckCollisionsFunction(projectileCollisionFunction);
           projectiles.push(proj);
           reloadTimeRemaining = spec.reloadTime * 1000;
+          if (spec.audio !== undefined) {
+            new Audio(spec.audio).play();
+          }
         }
         
         // template method--must be overridden
@@ -1126,6 +1129,7 @@ DTD.components = (function(graphics,particles,highscores) {
             text:'+'+towers[i].refund
           });
           towers.splice(i,1);
+          new Audio('audio/sell.wav').play();
         }
       }
     }
@@ -1134,7 +1138,7 @@ DTD.components = (function(graphics,particles,highscores) {
       for(var i = towers.length-1; i>=0; i--)
       {
         if(towers[i].isSelected()===true){
-          if (towers[i].canUpgrade() && cash > towers[i].upgradeCost) {
+          if (towers[i].canUpgrade() && cash >= towers[i].upgradeCost) {
             cash -= towers[i].upgradeCost;
             towers[i].upgrade();
           }
@@ -1191,7 +1195,8 @@ DTD.components = (function(graphics,particles,highscores) {
           particles.createFloatingNumberEffect({
             position:creeps[i].center,
             text:'+'+creeps[i].value
-          })
+          });
+          new Audio('audio/death.wav').play();
           score+=creeps[i].value;
           cash+=creeps[i].value;
           toRemove.push(i);
@@ -1351,6 +1356,7 @@ DTD.components = (function(graphics,particles,highscores) {
               center:projectile.center,
               dim:projectile.damageRadius
             });
+            new Audio('audio/bomb_explosion.wav').play();
             for(var j = 0; j < creeps.length; j++) {
               if (intersectCircles(creeps[j], projectile) && typesMatch(creeps[j], projectile.type) && i !== j) {
                 creeps[j].hit(projectile.damage);
@@ -1478,6 +1484,7 @@ DTD.components = (function(graphics,particles,highscores) {
   function Tower_Projectile(){
     var spec = {
       imageSrcBase: 'images/towers/projectile-',
+      audio: 'audio/projectile.wav',
       baseColor: 'rgba(79,6,39,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1514,6 +1521,7 @@ DTD.components = (function(graphics,particles,highscores) {
   function Tower_Slowing(){
     var spec = {
       imageSrcBase: 'images/towers/slowing-',
+      audio: 'audio/slowing.wav',
       baseColor: 'rgba(3,216,226,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1553,6 +1561,7 @@ DTD.components = (function(graphics,particles,highscores) {
   function Tower_Bomb(){
     var spec = {
       imageSrcBase: 'images/towers/bomb-',
+      audio: 'audio/bomb.wav',
       baseColor: 'rgba(255,84,0,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1593,6 +1602,7 @@ DTD.components = (function(graphics,particles,highscores) {
   function Tower_Missile(){
     var spec = {
       imageSrcBase: 'images/towers/missile-',
+      audio: 'sounds/missile.mp3',
       baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},
@@ -1697,4 +1707,4 @@ DTD.components = (function(graphics,particles,highscores) {
     Map : Map,
     ToolBox : ToolBox
   };
-}(DTD.graphics, DTD.particles, DTD.HighScores));
+}(DTD.graphics, DTD.particles, DTD.HighScores, DTD.audio));
