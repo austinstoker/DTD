@@ -12,11 +12,10 @@
 // ------------------------------------------------------------------
 DTD.HighScores = (function() {
 	'use strict';
-	var scores = [];
 
-	function add(score) {
+	function add(scores) {
 		$.ajax({
-			url: 'http://localhost:3000/v1/scores?score=' + score,
+			url: 'http://localhost:3000/v1/scores?creeps=' + scores.creepsKilled + '&towersval=' + scores.totalTowerValue,
 			type: 'POST',
 			error: function() { alert('POST failed'); },
 			success: function() {
@@ -35,7 +34,6 @@ DTD.HighScores = (function() {
 				callback(data);
 			}
 		});
-		return scores;
 	}
 
 	return {

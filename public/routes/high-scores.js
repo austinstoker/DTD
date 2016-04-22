@@ -3,7 +3,8 @@
 // USU CS5410 Game Development Spring 2016
 // Code modifications by Austin Stoker and Kendall Spackman
 
-var scores = [0, 0, 0, 0, 0];
+var creeps = [0, 0, 0, 0, 0];
+var towerValues = [0, 0, 0, 0, 0];
 
 //------------------------------------------------------------------
 //
@@ -13,7 +14,7 @@ var scores = [0, 0, 0, 0, 0];
 exports.all = function(request, response) {
 	console.log('get all scores called');
 	response.writeHead(200, {'content-type': 'application/json'});
-	response.end(JSON.stringify(scores));
+	response.end(JSON.stringify({creeps: creeps, towerValues: towerValues}));
 };
 
 //------------------------------------------------------------------
@@ -24,12 +25,20 @@ exports.all = function(request, response) {
 exports.add = function(request, response) {
 	console.log('add new score called');
 
-  scores.push(request.query.score);
-  scores.sort(function(a, b) {
+  creeps.push(request.query.creeps);
+  creeps.sort(function(a, b) {
 		return b - a;
   });
-  if (scores.length > 5) {
-		scores.pop();
+  if (creeps.length > 5) {
+		creeps.pop();
+  }
+	
+	towerValues.push(request.query.towersval);
+  towerValues.sort(function(a, b) {
+		return b - a;
+  });
+  if (towerValues.length > 5) {
+		towerValues.pop();
   }
 
 	response.writeHead(200);

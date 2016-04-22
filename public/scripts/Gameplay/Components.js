@@ -99,6 +99,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         get cost() {return spec.cost[spec.level];},
         get upgradeCost() { return spec.cost[spec.level + 1]; },
         get refund() {return spec.refund[spec.level];},
+        get towerValue() { return towerValue; },
         get isTower() {return true;}
       },
         projectiles = [],
@@ -110,7 +111,8 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         validPosition = 'yes',
         reloadTimeRemaining = 0,
         nearestCreepFunction,
-        projectileCollisionFunction;
+        projectileCollisionFunction,
+        towerValue = 0;
         
       that.placed = false;
       spec.width = Constants.TowerWidth;
@@ -140,6 +142,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         that.upgrade = function() {
           if (spec.level < 2) {
             spec.level++;
+            towerValue += spec.cost[spec.level];
             spec.imageSrc = spec.imageSrcBase + spec.level + '.png';
             texture = graphics.Texture(spec);
           }
@@ -304,6 +307,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
             that.render = renderPlaced;
             that.update = updatePlaced;
             spec.opacity = 1;
+            towerValue += spec.cost[0];
           }
         }
         
@@ -656,8 +660,17 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         fill: 'black',
         stroke: 'black',
         font:'20px Arial',
-        text:'Score: '+spec.map.score,
+        text:'Creeps Killed: '+spec.map.creepsKilled,
         position:{x:pos.x,y:pos.y+40},
+        hjustify:'left',
+        vjustify:'top'
+      });
+      graphics.drawText({
+        fill: 'black',
+        stroke: 'black',
+        font:'20px Arial',
+        text:'Total Tower Value: '+spec.map.totalTowerValue,
+        position:{x:pos.x,y:pos.y+60},
         hjustify:'left',
         vjustify:'top'
       });
@@ -867,7 +880,9 @@ DTD.components = (function(graphics,particles,highscores,audio) {
   
   function Map(spec){
     var that = {
-      get score() {return score;},
+      get creepsKilled() {return creepsKilled;},
+      get totalTowerValue() {return totalTowerValue;},
+      get scores() {return { creepsKilled: creepsKilled, totalTowerValue: totalTowerValue}; },
       get cash() {return cash;},
       get lives() {return lives;}
     };
@@ -877,7 +892,8 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     var grids = [];
     var cells = [];
     var entrances = [];
-    var score=0;
+    var creepsKilled=0;
+    var totalTowerValue=0;
     var cash=100;
     var lives=10;
     var curLevel = -1;
@@ -909,6 +925,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       isNewTowerPosValid();
       if(towerInProgress.validPosition==='yes'){
         cash-=towerInProgress.cost;
+        totalTowerValue += towerInProgress.cost;
         towers.push(towerInProgress);
         var blocked = getCellsBlockedByTower(towerInProgress);
         for(var e=0;e<entrances.length;e++){
@@ -1017,9 +1034,9 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     }
     
     function endGame() {
-      console.log("Ending game");
+      console.log('Ending game');
       gameOver = true;
-      highscores.add(score);
+      highscores.add(that.scores);
       audio.stopMusic();
       that.update = updateEnd;
     }
@@ -1098,6 +1115,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       {
         if(towers[i].isSelected()===true){
           cash+=towers[i].refund;
+          totalTowerValue -= towers[i].towerValue;
           particles.createFloatingNumberEffect({
             position:towers[i].center,
             text:'+'+towers[i].refund
@@ -1114,6 +1132,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         if(towers[i].isSelected()===true){
           if (towers[i].canUpgrade() && cash >= towers[i].upgradeCost) {
             cash -= towers[i].upgradeCost;
+            totalTowerValue += towers[i].upgradeCost;
             towers[i].upgrade();
           }
         }
@@ -1171,7 +1190,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
             text:'+'+creeps[i].value
           });
           audio.play('audio/death.wav');
-          score+=creeps[i].value;
+          creepsKilled++;
           cash+=creeps[i].value;
           toRemove.push(i);
         }
@@ -1587,7 +1606,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
   function Tower_Missile(){
     var spec = {
       imageSrcBase: 'images/towers/missile-',
-      audio: 'sounds/missile.mp3',
+      audio: 'audio/missile.mp3',
       baseColor: 'rgba(27,248,26,1)',
       rotation: 3 * Math.PI / 2,
       center:{x:0,y:0},

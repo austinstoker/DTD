@@ -39,9 +39,7 @@ DTD.audio = (function() {
   }
   
   function toggleMute() {
-    console.log(isMuted);
     isMuted = !isMuted;
-    console.log(isMuted);
   }
   
   function toggleMusic() {

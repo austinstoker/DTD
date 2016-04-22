@@ -21,6 +21,23 @@ body {
 	text-align: center;
 }
 
+#game h3 {
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+}
+
+#creeps-div {
+	float: left;
+	margin-left: 50px;
+	margin-right: 40px;
+	padding: 0px;
+}
+
+#tower-div {
+	float: left;
+}
+
 #game .screen {
 	position: absolute;
 	margin: auto;

@@ -20,15 +20,20 @@ DTD.pages['page-highscores'] = (function(screens) {
 	}
 	
 	function displayCallback(highScores) {
-		var highScoresHTML = document.getElementById('high-scores-list');
+		var creepScoresHTML = document.getElementById('creep-scores-list'),
+			towerScoresHTML = document.getElementById('tower-scores-list');
 
 		//
 		// Clear whatever was already in the display
-		highScoresHTML.innerHTML = '';
+		creepScoresHTML.innerHTML = '';
+		towerScoresHTML.innerHTML = '';
 		//
 		// Grab the previously saved high scores and get them displayed
-		highScores.forEach(function (score) {
-			highScoresHTML.innerHTML += (score + '<br/>');
+		highScores.creeps.forEach(function (score) {
+			creepScoresHTML.innerHTML += ('<li>' + score + '</li>');
+		});
+		highScores.towerValues.forEach(function (score) {
+			towerScoresHTML.innerHTML += (score + '<br/>');
 		});
 	}
 
