@@ -70,18 +70,12 @@ yepnope.addPrefix('preload', function(resource) {
 
 	DTD.status.preloadRequest += 1;
 	var isImage = /.+\.(jpg|png|gif)$/i.test(resource.url);
-	var isAudio = /.+\.(wav|mp3)$/i.test(resource.url);
 	resource.noexec = isImage;
 	resource.autoCallback = function(e) {
 		if (isImage) {
 			var image = new Image();
 			image.src = resource.url;
 			DTD.images[resource.url] = image;
-		}
-		if (isAudio) {
-			console.log("Audio: " + resource.url);
-			//var audio = new Audio(resource.url);
-			//DTD.audio[resource.url] = audio;
 		}
 		DTD.status.preloadComplete += 1;
 
