@@ -99,6 +99,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         get cost() {return spec.cost[spec.level];},
         get upgradeCost() { return spec.cost[spec.level + 1]; },
         get refund() {return spec.refund[spec.level];},
+        get isTower() {return true;}
       },
         projectiles = [],
         selected = false,
@@ -110,14 +111,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         reloadTimeRemaining = 0,
         nearestCreepFunction,
         projectileCollisionFunction;
-        // base = graphics.Texture({
-        //   image: 'images/towers/turret-base.gif',
-        //   width: Constants.TowerWidth,
-        //   height: Constants.TowerHeight,
-        //   center: spec.center,
-        //   rotation: 0,
-        //   test: true
-        // });
         
       that.placed = false;
       spec.width = Constants.TowerWidth;
@@ -171,14 +164,12 @@ DTD.components = (function(graphics,particles,highscores,audio) {
         
         function updateTarget() {
           if (!intersectCircles(that, spec.targetCreep) || !spec.targetCreep.alive()) {
-            // if (!intersectCircleRect(that, spec.targetCreep)) {
-              if (nearestCreepFunction !== undefined) {
-                var target = nearestCreepFunction(spec.center, spec.radius, spec.type);
-                if (spec.targetCreep !== target) {
-                  spec.targetCreep = target;
-                }
+            if (nearestCreepFunction !== undefined) {
+              var target = nearestCreepFunction(spec.center, spec.radius, spec.type);
+              if (spec.targetCreep !== target) {
+                spec.targetCreep = target;
               }
-          //   }
+            }
           }
           updateTargetRotation();
         }
@@ -236,7 +227,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
           projectiles.push(proj);
           reloadTimeRemaining = spec.reloadTime * 1000;
           if (spec.audio !== undefined) {
-            new Audio(spec.audio).play();
+            audio.play(spec.audio);
           }
         }
         
@@ -285,7 +276,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
             fill: f,
             opacity: 0.4
           });
-          // base.draw();
           
           texture.draw();
         }
@@ -673,7 +663,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       });
     }
     
-    that.addComponent = function(constructor){
+    that.addTower = function(constructor){
       var element = constructor();
       element.centerY = nextY;
       element.centerX = spec.position.x + gap + Constants.TowerWidth/2;
@@ -682,6 +672,13 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       components.push(element);
       var i = components.length;
       constructors[i-1] = constructor;
+    }
+    
+    that.addClickableComponent = function(component) {
+      component.centerY = nextY;
+      component.centerX = spec.position.x + gap + Constants.TowerWidth/2;
+      nextY = component.bottom + gap + Constants.TowerHeight/2;
+      components.push(component);
     }
     
     that.handleClick = function(event){
@@ -696,9 +693,13 @@ DTD.components = (function(graphics,particles,highscores,audio) {
           components[i].highlight = false;
       }
       if(tool !==undefined&&isCurTool==false){
-        spec.map.settowerInProgress(constructors[tool]);
+        if(components[tool].isTower) {
+          spec.map.settowerInProgress(constructors[tool]);
 
-        components[tool].highlight = true;
+          components[tool].highlight = true;
+        } else {
+          components[tool].handleClick(event);
+        }
       }
       else{
         spec.map.settowerInProgress(function(){return undefined;});
@@ -708,34 +709,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     return that;
   }
   
-  // function Cell(){
-  //   var that = {};
-  //   var creeps = [];
-    
-  //   that.addCreep = function(creep){
-  //     creeps.push(creep);
-  //   }
-    
-  //   that.checkCollsions = function(projectile){
-  //     for(var i = 0; i< creeps.length; i++ ){
-  //       var hit = intersectRectangles(projectile,creeps[i]);
-  //       if(hit){
-  //         creeps[i].hit(projectile.damage);
-  //           creeps[i].slow(projectile.freezePower);
-  //         projectile.hit();
-  //         particles.darkPuff({center:projectile.center})
-  //         break;
-  //       }
-  //     }
-  //   }
-    
-  //   that.removeCreep = function(creep){
-  //     var idx= creeps.indexOf(creep);
-  //     if(idx!==undefined){
-  //       creeps.splice(idx);
-  //     }
-  //   }
-  // }
   function Wave(spec){
     var that = {
       get isDone(){return isDone;}
@@ -1047,6 +1020,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       console.log("Ending game");
       gameOver = true;
       highscores.add(score);
+      audio.stopMusic();
       that.update = updateEnd;
     }
     
@@ -1129,7 +1103,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
             text:'+'+towers[i].refund
           });
           towers.splice(i,1);
-          new Audio('audio/sell.wav').play();
+          audio.play('audio/sell.wav');
         }
       }
     }
@@ -1196,14 +1170,13 @@ DTD.components = (function(graphics,particles,highscores,audio) {
             position:creeps[i].center,
             text:'+'+creeps[i].value
           });
-          new Audio('audio/death.wav').play();
+          audio.play('audio/death.wav');
           score+=creeps[i].value;
           cash+=creeps[i].value;
           toRemove.push(i);
         }
         
         creeps[i].update(elapsedTime);
-        //updateCreepCells(creeps[i]);
       }
       for(var i = toRemove.length-1; i>=0;i--){
         creeps.splice(toRemove[i],1);
@@ -1298,10 +1271,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     }
     
     function getNearestCreep(center, radius, type) {
-      //return creeps[0];
-      //var location = toMapUnits(center);
       var nearestCreep = undefined;
-      //var r = toMapUnits({x:radius,y:radius});
       for(var i = 0; i< creeps.length; i++){
         if (typesMatch(creeps[i], type)) {
           var oldDist = 100000;
@@ -1314,20 +1284,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
           }
         }
       }
-      
-      // for(var i = location.i-r.i; i<= location.i+r.i; i++ ){
-      //   for(var j = location.j-r.j1; j<= location.j+r.j; j++ ){
-      //     var creep = cells[i][j].getNearestCreep(center,radius);
-      //     if(creep===undefined){continue;}
-      //     if(nearestCreep===undefined){
-      //       nearestCreep = creep;
-      //     }
-      //     intersectRectangles
-      //     if(dist2(center,creep)<dist2(center,nearestCreep)){
-      //       nearestCreep = creep;
-      //     }
-      //   }
-      // }
       return nearestCreep;
     }
     
@@ -1336,13 +1292,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     }
     
     function checkCollisions(projectile){
-      // var location = toMapUnits(projectile.center);
-      // for(var i = location.i-1; i<= location.i+1; i++ ){
-      //   for(var j = location.j-1; j<= location.j+1; j++ ){
-      //     cells[i][j].checkCollsions(projectile);
-      //   }
-      // }
-
       for(var i = 0; i< creeps.length; i++ ){
         var hit = intersectCirclePoint(creeps[i], projectile);
         if(hit && typesMatch(creeps[i], projectile.type)){
@@ -1468,14 +1417,51 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       grids.push(updateShortestPaths(entrances[e]));
     }
     
-    // cells.length = 0;
-    // for(var i= 0; i<=spec.width/Constants.GridWidth;i++){
-    //   var row = []
-    //   for(var j= 0; j<=spec.height/Constants.GridHeight;j++){
-    //     row.push(Cell());
-    //   }
-    //   cells.push(row);
-    // }
+    return that;
+  }
+  
+  function SoundController(spec) {
+    var that = {
+      get highlight() {return false;},
+      get left() { return spec.center.x - Constants.TowerWidth / 2 },
+      get right() { return spec.center.x + Constants.TowerWidth / 2 },
+      get top() { return spec.center.y - Constants.TowerHeight / 2 },
+      get bottom() { return spec.center.y + Constants.TowerHeight / 2 },
+      get center() { return spec.center },
+      set centerX(value) { spec.center.x = value },
+      set centerY(value) { spec.center.y = value }
+    },
+    texture,
+    currImg = 0;
+    spec.opacity = 1;
+    spec.width = Constants.TowerWidth;
+    spec.height = Constants.TowerHeight;
+    spec.imageSrc = spec.images[currImg];
+    
+    texture = graphics.Texture(spec);
+    
+    that.handleClick = function() {
+      spec.toggleFunction();
+      currImg++;
+      if (currImg >= spec.images.length) {
+        currImg = 0;
+      }
+      spec.imageSrc = spec.images[currImg];
+      texture = graphics.Texture(spec);
+    }
+    
+    that.update = function() {}
+    
+    that.render = function() {
+      texture.draw();
+      graphics.drawRectangle({
+        stroke: 'black',
+        x: spec.center.x - Constants.TowerWidth / 2,
+        y: spec.center.y - Constants.TowerHeight / 2,
+        width: Constants.TowerWidth,
+        height: Constants.TowerHeight
+      })
+    }
     
     return that;
   }
@@ -1704,6 +1690,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     Creep_3 : Creep_3,
     Constants: Constants,
     Map : Map,
-    ToolBox : ToolBox
+    ToolBox : ToolBox,
+    SoundController : SoundController
   };
 }(DTD.graphics, DTD.particles, DTD.HighScores, DTD.audio));

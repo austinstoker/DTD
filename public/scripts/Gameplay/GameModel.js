@@ -1,4 +1,4 @@
-DTD.model = (function(components, graphics, input, particles, localStorage) {
+DTD.model = (function(components, graphics, input, particles, localStorage, audio) {
     var map = components.Map({
       width:600,
       height:600
@@ -11,13 +11,22 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
     keyboard = input.keyboard,
     sellKey,
     upgradeKey,
-    startKey,
-    music;
+    startKey;
     
-    toolBox.addComponent(components.Tower_Projectile);
-    toolBox.addComponent(components.Tower_Slowing);
-    toolBox.addComponent(components.Tower_Bomb);
-    toolBox.addComponent(components.Tower_Missile);
+    toolBox.addTower(components.Tower_Projectile);
+    toolBox.addTower(components.Tower_Slowing);
+    toolBox.addTower(components.Tower_Bomb);
+    toolBox.addTower(components.Tower_Missile);
+    toolBox.addClickableComponent(components.SoundController({
+      center: {x:0, y:0},
+      toggleFunction: audio.toggleMute,
+      images: ['images/sounds.png', 'images/sounds_mute.png']
+    }));
+    toolBox.addClickableComponent(components.SoundController({
+      center: {x:0, y:0},
+      toggleFunction: audio.toggleMusic,
+      images: ['images/music.png', 'images/music_mute.png']
+    }));
     
     function update(elapsedTime) {
       elapsedTime = Math.min(elapsedTime,200);
@@ -32,9 +41,8 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
     }
 
     function initialize() {
-      music = new Audio('audio/music.mp3');
-      music.loop = true;
-      music.play();
+      audio.setMusicFile('audio/music.mp3');
+      audio.playMusic();
       mouse.registerCommand('mouseup',toolBox.handleClick);
       mouse.registerCommand('mouseup',map.handleMouseClick);
       mouse.registerCommand('mousemove',map.handleMouseMove);
@@ -59,7 +67,7 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
     
     function pause() {
       cancelNextRequest = true;
-      music.pause();
+      audio.stopMusic();
       mouse.unregisterCommand('mouseup',toolBox.handleClick);
       mouse.unregisterCommand('mouseup',map.handleMouseClick);
       mouse.unregisterCommand('mousemove',map.handleMouseMove);
@@ -83,4 +91,4 @@ DTD.model = (function(components, graphics, input, particles, localStorage) {
         update: update,
         render: render
     }
-}(DTD.components, DTD.graphics, DTD.input, DTD.particles,DTD.localStorage));
+}(DTD.components, DTD.graphics, DTD.input, DTD.particles,DTD.localStorage,DTD.audio));
