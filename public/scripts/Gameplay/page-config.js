@@ -52,11 +52,11 @@ DTD.pages['page-config'] = (function(screens) {
       keyboard.registerConfigurableCommand(name,def,function(){},useCtrl,useAlt);
       return keyboard.keyToString(def);
     }
-    var SellTowerKey = getOrDefault("Sell Tower",KeyEvent.DOM_VK_S+1000);
+    var SellTowerKey = getOrDefault("Sell Tower",KeyEvent.DOM_VK_S);
     configHTML.innerHTML += ('Sell Tower: '+SellTowerKey+' <button name = "Sell Tower" id = "sellBindButton">Edit</button></br>');
-    var UpgradeKey = getOrDefault("Upgrade Tower",KeyEvent.DOM_VK_U+1000);
+    var UpgradeKey = getOrDefault("Upgrade Tower",KeyEvent.DOM_VK_U);
     configHTML.innerHTML += ('Upgrade Tower: '+UpgradeKey+' <button name = "Upgrade Tower" id = "upgradeBindButton">Edit</button></br>');
-    var StartLevelKey = getOrDefault("Start Level",KeyEvent.DOM_VK_G+1000);
+    var StartLevelKey = getOrDefault("Start Level",KeyEvent.DOM_VK_G);
     configHTML.innerHTML += ('Start Level: '+StartLevelKey+' <button name = "Start Level" id = "startBindButton">Edit</button></br>');
     
     var configButton = document.getElementById('sellBindButton');

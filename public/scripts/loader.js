@@ -29,13 +29,17 @@ window.addEventListener('load', function() {
         'preload!images/towers/slowing-0.png',
         'preload!images/towers/slowing-1.png',
         'preload!images/towers/slowing-2.png',
-        'preload!images/towers/turret-base.gif',
         'preload!images/creep/creep-1-blue/spriteSheet.png',
         'preload!images/creep/creep-2-green/spriteSheet.png',
         'preload!images/creep/creep-3-red/spriteSheet.png',
+				'preload!images/sounds.png',
+				'preload!images/sounds_mute.png',
+				'preload!images/music.png',
+				'preload!images/music_mute.png',
         'preload!scripts/Core/Graphics.js',
         'preload!scripts/Core/input.js',
         'preload!scripts/Core/localStorage.js',
+				'preload!scripts/Core/Audio.js',
         'preload!scripts/Core/HighScores.js',
         'preload!scripts/Core/random.js',
         'preload!scripts/Core/ParticleSystem.js',
@@ -47,6 +51,14 @@ window.addEventListener('load', function() {
         'preload!scripts/Gameplay/page-config.js',
         'preload!scripts/Gameplay/page-highscores.js',
         'preload!scripts/Gameplay/page-about.js',
+				'preload!audio/bomb.wav',
+				'preload!audio/death.wav',
+				'preload!audio/missile.mp3',
+				'preload!audio/music.mp3',
+				'preload!audio/projectile.wav',
+				'preload!audio/sell.wav',
+				'preload!audio/slowing.wav'
+				
 			],
 			complete : function() {
 				console.log('All files requested for loading...');
@@ -65,12 +77,17 @@ yepnope.addPrefix('preload', function(resource) {
 
 	DTD.status.preloadRequest += 1;
 	var isImage = /.+\.(jpg|png|gif)$/i.test(resource.url);
-	resource.noexec = isImage;
+	var isSound = /.+\.(mp3|wav)$/i.test(resource.url);
+	resource.noexec = isImage || isSound;
 	resource.autoCallback = function(e) {
 		if (isImage) {
 			var image = new Image();
 			image.src = resource.url;
 			DTD.images[resource.url] = image;
+		}
+		else if (isSound) {
+			var sound = new Audio(resource.url);
+			DTD.sounds[resource.url] = sound;
 		}
 		DTD.status.preloadComplete += 1;
 

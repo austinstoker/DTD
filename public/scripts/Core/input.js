@@ -73,6 +73,22 @@ DTD.input = (function() {
 				that.handlersMove.push(handler);
 			}
 		};
+		
+		that.unregisterCommand = function(type, handler) {
+			var handlers;
+			if (type === 'mousedown') {
+				handlers = that.handlersDown;
+			} else if (type === 'mouseup') {
+				handlers = that.handlersUp;
+			} else if (type === 'mousemove') {
+				handlers = that.handlersMove;
+			}
+			for (var i = handlers.length - 1; i >= 0; i--) {
+				if (handlers[i] === handler) {
+					handlers.splice(i, 1);
+				}
+			}
+		};
 
 		window.addEventListener('mousedown', mouseDown);
 		window.addEventListener('mouseup', mouseUp);
@@ -117,7 +133,11 @@ DTD.input = (function() {
 		//
 		// ------------------------------------------------------------------
 		that.registerCommand = function(key, handler, ctrlKey, altKey) {
-      that.registerConfigurableCommand("",key, handler, ctrlKey, altKey);
+      that.registerConfigurableCommand('',key, handler, ctrlKey, altKey);
+		};
+		
+		that.unregisterCommand = function(key, handler, ctrlKey, altKey) {
+      that.unregisterConfigurableCommand('',key, handler, ctrlKey, altKey);
 		};
     
     // ------------------------------------------------------------------
@@ -140,6 +160,18 @@ DTD.input = (function() {
 			handlers.push({ name : name, key : key, handler : handler});
 		};
     
+		that.unregisterConfigurableCommand = function(name, key, handler, ctrlKey, altKey) {
+      ctrlKey=ctrlKey||false;
+      altKey=altKey||false;
+      if(ctrlKey){key+=1000;}
+      if(altKey){key+=10000;}
+      for(var i=handlers.length-1; i>-1; i--) {
+        if(handlers[i].name===name && handlers[i].key === key && handlers[i].handler === handler){
+          handlers.splice(i,1);
+        }
+      }
+		};
+		
     // ------------------------------------------------------------------
 		//
 		// Allows the client code to register a keyboard handler who's key 
