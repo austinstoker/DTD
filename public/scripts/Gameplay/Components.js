@@ -1790,8 +1790,8 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       value:3,
       exitNumber: spec.exitNumber,
       speed: 40,
-      spriteCount: 6,
-      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ],
+      spriteCount: 4,
+      spriteTime: [ 1000, 200, 200, 200 ],
       type: Constants.GroundType
     });
   }
@@ -1826,8 +1826,8 @@ DTD.components = (function(graphics,particles,highscores,audio) {
       value:1,
       exitNumber: spec.exitNumber,
       speed: 50,
-      spriteCount: 4,
-      spriteTime: [ 1000, 200, 200, 200 ],
+      spriteCount: 6,
+      spriteTime: [ 1000, 200, 100, 1000, 100, 200 ],
       type: Constants.AirType
     });
   }
