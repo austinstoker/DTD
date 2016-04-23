@@ -52,6 +52,14 @@ window.addEventListener('load', function() {
         'preload!scripts/Gameplay/page-config.js',
         'preload!scripts/Gameplay/page-highscores.js',
         'preload!scripts/Gameplay/page-about.js',
+				'preload!audio/bomb.wav',
+				'preload!audio/death.wav',
+				'preload!audio/missile.mp3',
+				'preload!audio/music.mp3',
+				'preload!audio/projectile.wav',
+				'preload!audio/sell.wav',
+				'preload!audio/slowing.wav'
+				
 			],
 			complete : function() {
 				console.log('All files requested for loading...');
@@ -70,12 +78,17 @@ yepnope.addPrefix('preload', function(resource) {
 
 	DTD.status.preloadRequest += 1;
 	var isImage = /.+\.(jpg|png|gif)$/i.test(resource.url);
-	resource.noexec = isImage;
+	var isSound = /.+\.(mp3|wav)$/i.test(resource.url);
+	resource.noexec = isImage || isSound;
 	resource.autoCallback = function(e) {
 		if (isImage) {
 			var image = new Image();
 			image.src = resource.url;
 			DTD.images[resource.url] = image;
+		}
+		else if (isSound) {
+			var sound = new Audio(resource.url);
+			DTD.sounds[resource.url] = sound;
 		}
 		DTD.status.preloadComplete += 1;
 

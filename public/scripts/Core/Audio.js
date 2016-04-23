@@ -14,7 +14,8 @@ DTD.audio = (function() {
   
   function play(file) {
     if (!isMuted) {
-      new Audio(file).play();
+      var sound = DTD.sounds[file].cloneNode();
+      sound.play();
     }
   }
   
@@ -24,7 +25,7 @@ DTD.audio = (function() {
   
   function playMusic() {
     if (musicFile !== undefined) {
-      music = new Audio(musicFile);
+      music = DTD.sounds[musicFile];
       music.loop = true;
       music.play();
       musicPlaying = true;
