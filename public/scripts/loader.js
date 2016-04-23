@@ -29,7 +29,6 @@ window.addEventListener('load', function() {
         'preload!images/towers/slowing-0.png',
         'preload!images/towers/slowing-1.png',
         'preload!images/towers/slowing-2.png',
-        'preload!images/towers/turret-base.gif',
         'preload!images/creep/creep-1-blue/spriteSheet.png',
         'preload!images/creep/creep-2-green/spriteSheet.png',
         'preload!images/creep/creep-3-red/spriteSheet.png',
