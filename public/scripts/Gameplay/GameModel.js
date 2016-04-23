@@ -17,15 +17,30 @@ DTD.model = (function(components, graphics, input, particles, localStorage, audi
     toolBox.addTower(components.Tower_Slowing);
     toolBox.addTower(components.Tower_Bomb);
     toolBox.addTower(components.Tower_Missile);
-    toolBox.addClickableComponent(components.SoundController({
+    toolBox.addClickableComponent(components.ClickableComponent({
       center: {x:0, y:0},
-      toggleFunction: audio.toggleMute,
+      callback: audio.toggleMute,
       images: ['images/sounds.png', 'images/sounds_mute.png']
     }));
-    toolBox.addClickableComponent(components.SoundController({
+    toolBox.addClickableComponent(components.ClickableComponent({
       center: {x:0, y:0},
-      toggleFunction: audio.toggleMusic,
+      callback: audio.toggleMusic,
       images: ['images/music.png', 'images/music_mute.png']
+    }));
+    toolBox.addClickableComponent(components.ClickableComponent({
+      center: {x:0, y:0},
+      callback: map.upgradeTower,
+      text: 'Upgrade'
+    }));
+    toolBox.addClickableComponent(components.ClickableComponent({
+      center: {x:0, y:0},
+      callback: map.sellTower,
+      text: 'Sell'
+    }));
+    toolBox.addClickableComponent(components.ClickableComponent({
+      center: {x:0, y:0},
+      callback: map.startLevel,
+      text: 'Start Level'
     }));
     
     function update(elapsedTime) {

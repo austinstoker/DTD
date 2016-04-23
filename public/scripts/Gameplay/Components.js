@@ -1535,7 +1535,7 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     return that;
   }
   
-  function SoundController(spec) {
+  function ClickableComponent(spec) {
     var that = {
       get highlight() {return false;},
       get left() { return spec.center.x - Constants.TowerWidth / 2 },
@@ -1549,33 +1549,72 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     texture,
     currImg = 0;
     spec.opacity = 1;
-    spec.width = Constants.TowerWidth;
-    spec.height = Constants.TowerHeight;
-    spec.imageSrc = spec.images[currImg];
+    if (spec.images !== undefined) {
+      spec.imageSrc = spec.images[currImg];
+      spec.width = Constants.TowerWidth;
+      spec.height = Constants.TowerHeight;
+    }
+    else {
+      spec.width = graphics.measureTextWidth({
+        text: spec.text,
+        font: '20px Arial',
+        fill: 'black'
+      });
+      spec.height = graphics.measureTextHeight({
+        text: spec.text,
+        font: '20px Arial',
+        fill: 'black'
+      });
+      spec.width += 10;
+      spec.height += 10;
+      console.log(spec.width, spec.height);
+    }
     
     texture = graphics.Texture(spec);
     
     that.handleClick = function() {
-      spec.toggleFunction();
-      currImg++;
-      if (currImg >= spec.images.length) {
-        currImg = 0;
+      spec.callback();
+      if (spec.imageSrc !== undefined) {
+        currImg++;
+        if (currImg >= spec.images.length) {
+          currImg = 0;
+        }
+        spec.imageSrc = spec.images[currImg];
+        texture = graphics.Texture(spec);
       }
-      spec.imageSrc = spec.images[currImg];
-      texture = graphics.Texture(spec);
     }
     
     that.update = function() {}
     
     that.render = function() {
-      texture.draw();
-      graphics.drawRectangle({
-        stroke: 'black',
-        x: spec.center.x - Constants.TowerWidth / 2,
-        y: spec.center.y - Constants.TowerHeight / 2,
-        width: Constants.TowerWidth,
-        height: Constants.TowerHeight
-      })
+      if (spec.imageSrc !== undefined) {
+        texture.draw();
+        graphics.drawRectangle({
+          stroke: 'black',
+          x: spec.center.x - spec.width / 2,
+          y: spec.center.y - spec.height / 2,
+          width: spec.width,
+          height: spec.height
+        });
+      } else {
+        graphics.drawText({
+          font: '20px Arial',
+          fill: 'black',
+          position: {
+            x: spec.center.x - Constants.TowerWidth / 2 + 5,
+            y: spec.center.y
+          },
+          text: spec.text,
+          hjustify: 'left'
+        });
+        graphics.drawRectangle({
+          stroke: 'black',
+          x: spec.center.x - Constants.TowerWidth / 2,
+          y: spec.center.y - spec.height / 2,
+          width: spec.width,
+          height: spec.height
+        });
+      }
     }
     
     return that;
@@ -1806,6 +1845,6 @@ DTD.components = (function(graphics,particles,highscores,audio) {
     Constants: Constants,
     Map : Map,
     ToolBox : ToolBox,
-    SoundController : SoundController
+    ClickableComponent : ClickableComponent
   };
 }(DTD.graphics, DTD.particles, DTD.HighScores, DTD.audio));
